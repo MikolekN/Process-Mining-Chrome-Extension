@@ -1,5 +1,11 @@
 import os
 import sqlite3
+import datetime
+
+import pandas
+import pandas as pd
+import pm4py
+from pm4py.objects.conversion.log import converter as log_converter
 
 ID = 1
 events = []
@@ -148,12 +154,72 @@ def load_events():
     events = events[200:]
 
 
+def read_column_data_to_export():
+    case_ids = []
+    event_ids = []
+    from_ids = []
+    timestamps = []
+    transitions = []
+    durations = []
+    titles = []
+    urls = []
+
+    for c in cases:
+        for e in c.events:
+            case_ids.append(str(c.case_id))
+            event_ids.append(e.event_id)
+            from_ids.append(e.from_visit)
+            timestamps.append(datetime.datetime(1601, 1, 1) + datetime.timedelta(microseconds=e.timestamp))
+            transitions.append(e.transition)
+            durations.append(e.duration)
+            titles.append(e.title)
+            urls.append(e.url)
+
+    return case_ids, event_ids, from_ids, timestamps, transitions, durations, titles, urls
+
+
+def export_to_csv():
+    case_ids, event_ids, from_ids, timestamps, transitions, durations, titles, urls = read_column_data_to_export()
+    data = {
+        "case_id": case_ids,
+        "event_id": event_ids,
+        "from_id": from_ids,
+        "timestamp": timestamps,
+        "transition": transitions,
+        "duration": durations,
+        "title": titles,
+        "url": urls,
+    }
+    df = pd.DataFrame(data)
+    df.to_csv("eventlog_CSV.csv")
+    df = pandas.read_csv("eventlog_CSV.csv")
+    print(df.to_string())
+
+
+def export_to_xes():
+    case_ids, event_ids, from_ids, timestamps, transitions, durations, titles, urls = read_column_data_to_export()
+    data = {
+        "case_id": case_ids,
+        "event_id": event_ids,
+        "from_id": from_ids,
+        "timestamp": timestamps,
+        "transition": transitions,
+        "duration": durations,
+        "title": titles,
+        "url": urls,
+    }
+    df = pd.DataFrame(data)
+    pm4py.write_xes(df, "eventlog_XES.xes", "case_id")
+    df = pm4py.convert_to_dataframe(pm4py.read_xes("eventlog_XES.xes"))
+    print(df.to_string())
+
+
 load_events()
 create_cases()
 while True:
     print()
     prompt = input("[.] Type:\n[.] <a> to print full events information\n[.] <b> to print events\n[.] <c> to print "
-                   "cases\n[.] <d> to print event log\n[>] ")
+                   "cases\n[.] <d> to print event log\n[.] <e> to export to csv\n[.] <f> to export to xes\n[>] ")
     if prompt == "a":
         print_full_events()
     elif prompt == "b":
@@ -162,5 +228,9 @@ while True:
         print_cases()
     elif prompt == "d":
         print_eventlog()
+    elif prompt == "e":
+        export_to_csv()
+    elif prompt == "f":
+        export_to_xes()
     else:
         break
