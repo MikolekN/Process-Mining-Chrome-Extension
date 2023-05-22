@@ -154,7 +154,7 @@ def load_events():
     events = events[200:]
 
 
-def read_column_data_to_export():
+def read_data_to_export():
     case_ids = []
     event_ids = []
     from_ids = []
@@ -175,11 +175,6 @@ def read_column_data_to_export():
             titles.append(e.title)
             urls.append(e.url)
 
-    return case_ids, event_ids, from_ids, timestamps, transitions, durations, titles, urls
-
-
-def export_to_csv():
-    case_ids, event_ids, from_ids, timestamps, transitions, durations, titles, urls = read_column_data_to_export()
     data = {
         "case_id": case_ids,
         "event_id": event_ids,
@@ -190,25 +185,21 @@ def export_to_csv():
         "title": titles,
         "url": urls,
     }
+
     df = pd.DataFrame(data)
+
+    return df
+
+
+def export_to_csv():
+    df = read_data_to_export()
     df.to_csv("eventlog_CSV.csv")
     df = pandas.read_csv("eventlog_CSV.csv")
     print(df.to_string())
 
 
 def export_to_xes():
-    case_ids, event_ids, from_ids, timestamps, transitions, durations, titles, urls = read_column_data_to_export()
-    data = {
-        "case_id": case_ids,
-        "event_id": event_ids,
-        "from_id": from_ids,
-        "timestamp": timestamps,
-        "transition": transitions,
-        "duration": durations,
-        "title": titles,
-        "url": urls,
-    }
-    df = pd.DataFrame(data)
+    df = read_data_to_export()
     pm4py.write_xes(df, "eventlog_XES.xes", "case_id")
     df = pm4py.convert_to_dataframe(pm4py.read_xes("eventlog_XES.xes"))
     print(df.to_string())
