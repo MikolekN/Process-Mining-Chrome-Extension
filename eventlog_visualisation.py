@@ -20,11 +20,8 @@ class Case:
         Case.cases.append(self)
 
     def __str__(self):
-        if filtered:
-            event_strings = [str(event) for event in self.events if event.duration != 0]
-        else:
-            event_strings = [str(event) for event in self.events]
-        return str(self.case_id) + ") " + " -> ".join(event_strings) if event_strings else ""
+        event_strings = [str(event) for event in self.events if event.duration != 0 or not filtered]
+        return f"{self.case_id}) " + " -> ".join(event_strings) if event_strings else ""
 
 
 class Event:
@@ -61,8 +58,7 @@ def get_event(id):
 
 
 def filter_events_by_duration():
-    filtered_events = [event for event in Event.events if event.duration != 0]
-    return filtered_events
+    return [event for event in Event.events if event.duration != 0]
 
 
 def print_events():
@@ -237,7 +233,8 @@ while True:
     print(f"Current output is {'filtered' if filtered else 'not filtered'}")
     prompt = input("[.] Type:\n[.] <a> to print full events information\n[.] <b> to print events\n[.] <c> to print "
                    "cases\n[.] <d> to print event log\n[.] <e> to export to csv\n[.] <f> to export to xes\n[.] <g> to "
-                   "continuously print event log (as if it was done in the background)\n[>] ")
+                   "continuously print event log (as if it was done in the background)\n[.] <h> to toggle filtering "
+                   "out 0 in duration\n[>] ")
     if prompt == "a":
         print_full_events()
     elif prompt == "b":
