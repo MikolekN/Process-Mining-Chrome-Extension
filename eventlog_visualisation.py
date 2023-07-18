@@ -6,6 +6,8 @@ import time
 import pandas as pd
 import pm4py
 
+filtered = False
+
 
 class Case:
     ID = 0
@@ -18,8 +20,11 @@ class Case:
         Case.cases.append(self)
 
     def __str__(self):
-        event_strings = [str(event) for event in self.events]
-        return str(self.case_id) + ") " + " -> ".join(event_strings)
+        if filtered:
+            event_strings = [str(event) for event in self.events if event.duration != 0]
+        else:
+            event_strings = [str(event) for event in self.events]
+        return str(self.case_id) + ") " + " -> ".join(event_strings) if event_strings else ""
 
 
 class Event:
@@ -55,8 +60,14 @@ def get_event(id):
     return None
 
 
+def filter_events_by_duration():
+    filtered_events = [event for event in Event.events if event.duration != 0]
+    return filtered_events
+
+
 def print_events():
-    for event in Event.events:
+    events = Event.events if not filtered else filter_events_by_duration()
+    for event in events:
         print(
             event.event_id,
             event.from_visit,
@@ -65,7 +76,8 @@ def print_events():
 
 
 def print_full_events():
-    for event in Event.events:
+    events = Event.events if not filtered else filter_events_by_duration()
+    for event in events:
         print(
             event.event_id,
             event.from_visit,
@@ -93,6 +105,8 @@ def print_eventlog():
 
     for case in Case.cases:
         for i, event in enumerate(case.events):
+            if filtered and event.duration == 0:  # Skip events with duration 0
+                continue
             row = [
                 str(case.case_id).center(10),
                 str(event.event_id).center(10),
@@ -113,7 +127,8 @@ def print_eventlog():
 
 def print_cases():
     for c in Case.cases:
-        print(c)
+        if str(c):
+            print(c)
 
 
 def create_cases():
@@ -219,6 +234,7 @@ load_events()
 create_cases()
 while True:
     print()
+    print(f"Current output is {'filtered' if filtered else 'not filtered'}")
     prompt = input("[.] Type:\n[.] <a> to print full events information\n[.] <b> to print events\n[.] <c> to print "
                    "cases\n[.] <d> to print event log\n[.] <e> to export to csv\n[.] <f> to export to xes\n[.] <g> to "
                    "continuously print event log (as if it was done in the background)\n[>] ")
@@ -236,5 +252,7 @@ while True:
         export_to_xes()
     elif prompt == "g":
         in_the_background()
+    elif prompt == "h":
+        filtered = not filtered
     else:
         break
