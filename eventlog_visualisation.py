@@ -100,8 +100,11 @@ def print_eventlog():
     print(" | ".join(header))
 
     for case in Case.cases:
+        j = 0
         for i, event in enumerate(case.events):
             if filtered and event.duration == 0:  # Skip events with duration 0
+                if i == j:
+                    j += 1
                 continue
             row = [
                 str(case.case_id).center(10),
@@ -114,7 +117,7 @@ def print_eventlog():
                 str(event.title[:100]).ljust(100),
                 str(event.url).ljust(200)
             ]
-            if i == 0:
+            if i == j:
                 print(" | ".join(row))
             else:
                 row[0] = "".center(10)  # Empty space for Case ID in subsequent rows
