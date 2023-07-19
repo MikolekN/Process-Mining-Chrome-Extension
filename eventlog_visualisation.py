@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import datetime
+import threading
 import time
 
 import pandas as pd
@@ -214,19 +215,26 @@ def export_to_xes():
     print(df.to_string())
 
 
-def in_the_background():
-    while True:
+def background_process(close):
+    while not close.is_set():
         Case.ID = 1
         Event.events = []
         Case.cases = []
         try:
             load_events()
         except:
-            time.sleep(5)
+            close.wait(5)
             continue
         create_cases()
         print_eventlog()
-        time.sleep(10)
+        close.wait(10)
+
+
+def in_the_background():
+    close = threading.Event()
+    threading.Thread(target=background_process, args=(close,)).start()
+    input("[.] Type anything to break:\n[>] ")
+    close.set()
 
 
 load_events()
