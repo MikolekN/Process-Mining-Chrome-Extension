@@ -10,7 +10,7 @@ filtered = False
 
 
 class Case:
-    ID = 0
+    ID = 1
     cases = []
 
     def __init__(self, case_events=None):
@@ -145,7 +145,6 @@ def create_cases():
 def load_events():
     # path to user's history database (Chrome)
     data_path = os.path.expanduser('~') + "\\AppData\\Local\\Google\\Chrome\\User Data\\Default"
-    files = os.listdir(data_path)
 
     history_db = os.path.join(data_path, 'history')
 
@@ -159,7 +158,6 @@ def load_events():
     results = cursor.fetchall()  # tuple
     for event_id, title, url, t, from_visit, transition, duration in results:
         Event(event_id, t, from_visit, title, url, transition, duration)
-    # events = events[150:]
 
 
 def read_data_to_export():
@@ -214,8 +212,10 @@ def export_to_xes():
 
 
 def in_the_background():
-    raise PermissionError
     while True:
+        Case.ID = 1
+        Event.events = []
+        Case.cases = []
         try:
             load_events()
         except:
