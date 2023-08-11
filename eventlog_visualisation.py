@@ -2,91 +2,14 @@ import os
 import sqlite3
 import datetime
 import threading
-import time
+from events import Event, Events
+from cases import Case, Cases
 
 import pandas as pd
 import pm4py
 
-filtered = False
 
-
-class Case:
-    ID = 1
-    cases = []
-
-    def __init__(self, case_events=None):
-        self.case_id = Case.ID
-        Case.ID += 1
-        self.events = case_events
-        Case.cases.append(self)
-
-    def __str__(self):
-        event_strings = [str(event) for event in self.events if event.duration != 0 or not filtered]
-        return f"{self.case_id}) " + " -> ".join(event_strings) if event_strings else ""
-
-
-class Event:
-    events = []
-
-    def __init__(self, id, t, from_visit, title, url, transition, duration):
-        self.event_id = id
-        self.timestamp = t
-        self.from_visit = from_visit
-        self.title = title
-        self.url = url
-        self.transition = transition
-        self.duration = duration
-        self.tip = True
-        self.process_events(from_visit)
-        Event.events.append(self)
-
-    @staticmethod
-    def process_events(from_visit):
-        if from_visit != 0:
-            for event in Event.events:
-                if event.event_id == from_visit:
-                    event.tip = False
-
-    def __str__(self):
-        return str(self.event_id)
-
-
-def get_event(id):
-    for event in Event.events:
-        if event.event_id == id:
-            return event
-    return None
-
-
-def filter_events_by_duration():
-    return [event for event in Event.events if event.duration != 0]
-
-
-def print_events():
-    events = Event.events if not filtered else filter_events_by_duration()
-    for event in events:
-        print(
-            event.event_id,
-            event.from_visit,
-            event.tip
-        )
-
-
-def print_full_events():
-    events = Event.events if not filtered else filter_events_by_duration()
-    for event in events:
-        print(
-            event.event_id,
-            event.from_visit,
-            event.tip,
-            event.title,
-            event.url,
-            event.transition,
-            event.duration
-        )
-
-
-def print_eventlog():
+def print_eventlog(cases, filtered):
     header = [
         "Case ID".center(10),
         "Event ID".center(10),
@@ -100,7 +23,7 @@ def print_eventlog():
     ]
     print(" | ".join(header))
 
-    for case in Case.cases:
+    for case_index, case in enumerate(cases.cases):
         j = 0
         for i, event in enumerate(case.events):
             if filtered and event.duration == 0:  # Skip events with duration 0
@@ -108,7 +31,7 @@ def print_eventlog():
                     j += 1
                 continue
             row = [
-                str(case.case_id).center(10),
+                str(case_index).center(10),
                 str(event.event_id).center(10),
                 str(event.from_visit).center(10),
                 str(event.timestamp).center(20),
@@ -125,28 +48,22 @@ def print_eventlog():
                 print(" | ".join(row))
 
 
-def print_cases():
-    for c in Case.cases:
-        if str(c):
-            print(c)
-
-
-def create_cases():
-    for e in Event.events:
+def create_cases(events, cases):
+    for event in events.events:
         c = []
-        if e.tip:
-            c.append(e)
-            current = e
+        if event.tip:
+            c.append(event)
+            current = event
             while current.from_visit != 0:
-                current = get_event(current.from_visit)
+                current = events.get_event(current.from_visit)
                 if current is None:
                     break
                 c.append(current)
             c.reverse()
-            Case(c)
+            cases.append(Case(c))
 
 
-def load_events():
+def load_events(events):
     # path to user's history database (Chrome)
     data_path = os.path.expanduser('~') + "\\AppData\\Local\\Google\\Chrome\\User Data\\Default"
 
@@ -161,10 +78,10 @@ def load_events():
 
     results = cursor.fetchall()  # tuple
     for event_id, title, url, t, from_visit, transition, duration in results:
-        Event(event_id, t, from_visit, title, url, transition, duration)
+        events.append(Event(event_id, t, from_visit, title, url, transition, duration))
 
 
-def read_data_to_export():
+def read_data_to_export(cases):
     case_ids = []
     event_ids = []
     from_ids = []
@@ -174,16 +91,16 @@ def read_data_to_export():
     titles = []
     urls = []
 
-    for c in Case.cases:
-        for e in c.events:
-            case_ids.append(str(c.case_id))
-            event_ids.append(e.event_id)
-            from_ids.append(e.from_visit)
-            timestamps.append(datetime.datetime(1601, 1, 1) + datetime.timedelta(microseconds=e.timestamp))
-            transitions.append(e.transition)
-            durations.append(e.duration)
-            titles.append(e.title)
-            urls.append(e.url)
+    for case_index, case in enumerate(cases.cases):
+        for event in case.events:
+            case_ids.append(str(case_index))
+            event_ids.append(event.event_id)
+            from_ids.append(event.from_visit)
+            timestamps.append(datetime.datetime(1601, 1, 1) + datetime.timedelta(microseconds=event.timestamp))
+            transitions.append(event.transition)
+            durations.append(event.duration)
+            titles.append(event.title)
+            urls.append(event.url)
 
     data = {
         "case_id": case_ids,
@@ -201,66 +118,74 @@ def read_data_to_export():
     return df
 
 
-def export_to_csv():
-    df = read_data_to_export()
+def export_to_csv(cases):
+    df = read_data_to_export(cases)
     df.to_csv("eventlog_CSV.csv")
     df = pd.read_csv("eventlog_CSV.csv")
     print(df.to_string())
 
 
-def export_to_xes():
-    df = read_data_to_export()
+def export_to_xes(cases):
+    df = read_data_to_export(cases)
     pm4py.write_xes(df, "eventlog_XES.xes", "case_id")
     df = pm4py.convert_to_dataframe(pm4py.read_xes("eventlog_XES.xes"))
     print(df.to_string())
 
 
-def background_process(close):
+def background_process(close, events, cases, filtered):
     while not close.is_set():
-        Case.ID = 1
         Event.events = []
         Case.cases = []
         try:
-            load_events()
+            load_events(events)
         except:
             close.wait(5)
             continue
-        create_cases()
-        print_eventlog()
+        create_cases(events, cases)
+        print_eventlog(cases, filtered)
         close.wait(10)
 
 
-def in_the_background():
+def in_the_background(events, cases, filtered):
     close = threading.Event()
-    threading.Thread(target=background_process, args=(close,)).start()
+    threading.Thread(target=background_process, args=(close, events, cases, filtered)).start()
     input("[.] Type anything to break:\n[>] ")
     close.set()
 
 
-load_events()
-create_cases()
-while True:
-    print()
-    print(f"Current output is {'filtered' if filtered else 'not filtered'}")
-    prompt = input("[.] Type:\n[.] <a> to print full events information\n[.] <b> to print events\n[.] <c> to print "
-                   "cases\n[.] <d> to print event log\n[.] <e> to export to csv\n[.] <f> to export to xes\n[.] <g> to "
-                   "continuously print event log (as if it was done in the background)\n[.] <h> to toggle filtering "
-                   "out 0 in duration\n[>] ")
-    if prompt == "a":
-        print_full_events()
-    elif prompt == "b":
-        print_events()
-    elif prompt == "c":
-        print_cases()
-    elif prompt == "d":
-        print_eventlog()
-    elif prompt == "e":
-        export_to_csv()
-    elif prompt == "f":
-        export_to_xes()
-    elif prompt == "g":
-        in_the_background()
-    elif prompt == "h":
-        filtered = not filtered
-    else:
-        break
+def main():
+    cases = Cases()
+    events = Events()
+
+    filtered = False
+
+    load_events(events)
+    create_cases(events, cases)
+    while True:
+        print()
+        print(f"Current output is {'filtered' if filtered else 'not filtered'}")
+        prompt = input("[.] Type:\n[.] <a> to print full events information\n[.] <b> to print events\n[.] <c> to print "
+                       "cases\n[.] <d> to print event log\n[.] <e> to export to csv\n[.] <f> to export to xes\n[.] "
+                       "<g> to continuously print event log (as if it was done in the background)\n[.] <h> to toggle "
+                       "filtering out 0 in duration\n[>] ")
+        if prompt == "a":
+            events.print_full_events(filtered)
+        elif prompt == "b":
+            events.print_events(filtered)
+        elif prompt == "c":
+            cases.print_cases()
+        elif prompt == "d":
+            print_eventlog(cases, filtered)
+        elif prompt == "e":
+            export_to_csv(cases)
+        elif prompt == "f":
+            export_to_xes(cases)
+        elif prompt == "g":
+            in_the_background(events, cases, filtered)
+        elif prompt == "h":
+            filtered = not filtered
+        else:
+            break
+
+
+main()

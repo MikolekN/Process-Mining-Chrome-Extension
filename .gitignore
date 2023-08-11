@@ -1,3 +1,4 @@
 .idea
 eventlog_CSV.csv
 eventlog_XES.xes
+__pycache__
