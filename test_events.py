@@ -22,35 +22,35 @@ class TestEvents(unittest.TestCase):
         cls.event3 = Event(3, "2023-07-21", 2, "Visit 3", "https://example.com/page/page", "link", 0)
 
     def test_empty_events(self):
-        events_list = Events()
+        events_list = Events(update_cases=None)
         self.assertEqual(len(events_list.events), 0)
 
     def test_initial_events_single(self):
-        events_list = Events(self.event1)
+        events_list = Events(update_cases=None, initial_events=self.event1)
         self.assertEqual(len(events_list.events), 1)
         self.assertEqual(events_list.events[0], self.event1)
 
     def test_initial_events_list(self):
-        events_list = Events([self.event1, self.event2])
+        events_list = Events(update_cases=None, initial_events=[self.event1, self.event2])
         self.assertEqual(len(events_list.events), 2)
         self.assertEqual(events_list.events[0], self.event1)
         self.assertEqual(events_list.events[1], self.event2)
 
     def test_initial_events_list_tip(self):
-        events_list = Events([self.event1, self.event2])
+        events_list = Events(update_cases=None, initial_events=[self.event1, self.event2])
         self.assertEqual(len(events_list.events), 2)
         self.assertEqual(events_list.events[0].tip, False)
         self.assertEqual(events_list.events[1].tip, True)
 
     def test_append_event(self):
-        events_list = Events(self.event1)
+        events_list = Events(update_cases=None, initial_events=self.event1)
         events_list.append(self.event2)
         self.assertEqual(len(events_list.events), 2)
         self.assertEqual(events_list.events[0], self.event1)
         self.assertEqual(events_list.events[1], self.event2)
 
     def test_append_events(self):
-        events_list = Events(self.event1)
+        events_list = Events(update_cases=None, initial_events=self.event1)
         events_list.append([self.event2, self.event3])
         self.assertEqual(len(events_list.events), 3)
         self.assertEqual(events_list.events[0], self.event1)
@@ -58,18 +58,18 @@ class TestEvents(unittest.TestCase):
         self.assertEqual(events_list.events[2], self.event3)
 
     def test_append_event_tip(self):
-        events_list = Events(self.event1)
+        events_list = Events(update_cases=None, initial_events=self.event1)
         events_list.append(self.event2)
         self.assertEqual(events_list.events[0].tip, False)
         self.assertEqual(events_list.events[1].tip, True)
 
     def test_get_event(self):
-        events_list = Events([self.event1, self.event2])
+        events_list = Events(update_cases=None, initial_events=[self.event1, self.event2])
         self.assertEqual(events_list.get_event(1), self.event1)
         self.assertEqual(events_list.get_event(2), self.event2)
 
     def test_filter_events(self):
-        events_list = Events([self.event1, self.event2, self.event3])
+        events_list = Events(update_cases=None, initial_events=[self.event1, self.event2, self.event3])
         filtered_events_list = events_list.filter_by_duration()
         self.assertEqual(len(filtered_events_list), 2)
 
