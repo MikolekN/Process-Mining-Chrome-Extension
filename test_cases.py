@@ -59,3 +59,16 @@ class TestCases(unittest.TestCase):
         self.assertEqual(len(cases.cases), 2)
         self.assertEqual(cases.cases[0], self.case1)
         self.assertEqual(cases.cases[1], self.case2)
+
+    def test_cases_remove(self):
+        cases = Cases(self.case1)
+        cases.remove(self.case1)
+        self.assertEqual(len(cases.cases), 0)
+
+    def test_update_cases(self):
+        cases = Cases([self.case1, self.case2])
+        cases.update_cases(self.event3)
+        self.assertEqual(len(cases.cases[0].events), 3)
+        self.assertEqual(cases.cases[0].events[-1], self.event3)
+        self.assertEqual(len(cases.cases[1].events), 2)
+        self.assertEqual(cases.cases[1].events[-1], self.event3)

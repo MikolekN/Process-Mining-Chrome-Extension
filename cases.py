@@ -25,6 +25,15 @@ class Cases:
     def remove(self, case):
         self.cases.remove(case)
 
+    def update_cases(self, event):
+        added = False
+        for case in self.cases:
+            if event.from_visit == case.events[-1].event_id:
+                added = True
+                case.events.append(event)
+        if not added:
+            self.cases.append(Case(event))
+
     def print_cases(self):
         for case_index, case in enumerate(self.cases):
             print(f"{case_index + 1}) " + str(case))

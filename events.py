@@ -14,8 +14,9 @@ class Event:
 
 
 class Events:
-    def __init__(self, initial_events=None):
+    def __init__(self, update_cases=None, initial_events=None):
         self.events = []
+        self.update_cases = update_cases
         if initial_events is not None:
             if isinstance(initial_events, Event):
                 self.events = [initial_events]
@@ -38,6 +39,8 @@ class Events:
     def _append_single_event(self, event):
         self.events.append(event)
         self._update_tip(event)
+        if self.update_cases:
+            self.update_cases(event)
 
     def _append_multiple_events(self, events):
         if not all(isinstance(event, Event) for event in events):
@@ -45,11 +48,14 @@ class Events:
         self.events.extend(events)
         for event in events:
             self._update_tip(event)
+            if self.update_cases:
+                self.update_cases(event)
 
     def _update_tip(self, event):
         if event.from_visit != 0:
             e = self.get_event(event.from_visit)
-            e.tip = False
+            if e is not None:
+                e.tip = False
 
     def get_event(self, event_index):
         for event in self.events:

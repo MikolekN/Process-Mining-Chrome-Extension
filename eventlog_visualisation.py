@@ -48,21 +48,6 @@ def print_eventlog(cases, filtered):
                 print(" | ".join(row))
 
 
-def create_cases(events, cases):
-    for event in events.events:
-        c = []
-        if event.tip:
-            c.append(event)
-            current = event
-            while current.from_visit != 0:
-                current = events.get_event(current.from_visit)
-                if current is None:
-                    break
-                c.append(current)
-            c.reverse()
-            cases.append(Case(c))
-
-
 def load_events(events):
     # path to user's history database (Chrome)
     data_path = os.path.expanduser('~') + "\\AppData\\Local\\Google\\Chrome\\User Data\\Default"
@@ -141,7 +126,6 @@ def background_process(close, events, cases, filtered):
         except:
             close.wait(5)
             continue
-        create_cases(events, cases)
         print_eventlog(cases, filtered)
         close.wait(10)
 
@@ -155,12 +139,11 @@ def in_the_background(events, cases, filtered):
 
 def main():
     cases = Cases()
-    events = Events()
+    events = Events(update_cases=cases.update_cases)
 
     filtered = False
 
     load_events(events)
-    create_cases(events, cases)
     while True:
         print()
         print(f"Current output is {'filtered' if filtered else 'not filtered'}")
