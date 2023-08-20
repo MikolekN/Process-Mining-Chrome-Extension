@@ -1,20 +1,43 @@
 class Event:
-    def __init__(self, event_id, timestamp, from_visit, title, url, transition, duration):
-        self.event_id = event_id
-        self.timestamp = timestamp
-        self.from_visit = from_visit
+    def __init__(self, eventId, timestamp, fromVisit, title, url, transition, duration, tip=True):
+        self.eventId = int(eventId)
+        self.timestamp = int(timestamp)
+        self.fromVisit = int(fromVisit)
         self.title = title
         self.url = url
         self.transition = transition
-        self.duration = duration
-        self.tip = True
+        self.duration = int(duration)
+        self.tip = bool(tip)
 
     def __str__(self):
-        return str(self.event_id)
+        return str(self.eventId)
+
+    def serialize(self):
+        return {
+            "eventId": self.eventId,
+            "timestamp": self.timestamp,
+            "fromVisit": self.fromVisit,
+            "title": self.title,
+            "url": self.url,
+            "transition": self.transition,
+            "duration": self.duration,
+            "tip": self.tip
+        }
+
+    @classmethod
+    def deserialize(cls, data):
+        return Event(eventId=data['eventId'],
+                     timestamp=data['timestamp'],
+                     fromVisit=data['fromVisit'],
+                     title=data['title'],
+                     url=data['url'],
+                     transition=data['transition'],
+                     duration=data['duration'],
+                     tip=data['tip'])
 
 
 class Events:
-    def __init__(self, update_cases=None, initial_events=None):
+    def __init__(self, initial_events=None, update_cases=None):
         self.events = []
         self.update_cases = update_cases
         if initial_events is not None:
@@ -52,14 +75,14 @@ class Events:
                 self.update_cases(event)
 
     def _update_tip(self, event):
-        if event.from_visit != 0:
-            e = self.get_event(event.from_visit)
+        if event.fromVisit != 0:
+            e = self.get_event(event.fromVisit)
             if e is not None:
                 e.tip = False
 
     def get_event(self, event_index):
         for event in self.events:
-            if event.event_id == event_index:
+            if event.eventId == event_index:
                 return event
         return None
 
@@ -70,8 +93,8 @@ class Events:
         events = self.events if not filtered else self.filter_by_duration()
         for event in events:
             print(
-                event.event_id,
-                event.from_visit,
+                event.eventId,
+                event.fromVisit,
                 event.tip
             )
 
@@ -79,8 +102,8 @@ class Events:
         events = self.events if not filtered else self.filter_by_duration()
         for event in events:
             print(
-                event.event_id,
-                event.from_visit,
+                event.eventId,
+                event.fromVisit,
                 event.tip,
                 event.title,
                 event.url,
@@ -91,3 +114,5 @@ class Events:
     def process_events(self):
         for event in self.events:
             self._update_tip(event)
+            if self.update_cases:
+                self.update_cases(event)

@@ -1,14 +1,14 @@
 import unittest
-from cases import Case, Cases
-from events import Event
+from case.cases import Case, Cases
+from event.events import Event
 
 
 class TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.event1 = Event(event_id=1, timestamp="2023-07-19", from_visit=0, title="Visit 1", url="https://example.com",
+        cls.event1 = Event(eventId=1, timestamp=1067232138, fromVisit=0, title="Visit 1", url="https://example.com",
                            transition="link", duration=10)
-        cls.event2 = Event(event_id=2, timestamp="2023-07-20", from_visit=1, title="Visit 2",
+        cls.event2 = Event(eventId=2, timestamp=1699699158, fromVisit=1, title="Visit 2",
                            url="https://example.com/page",
                            transition="link", duration=5)
 
@@ -28,10 +28,10 @@ class TestCase(unittest.TestCase):
 class TestCases(unittest.TestCase):
     @classmethod
     def setUp(cls):
-        cls.event1 = Event(event_id=1, timestamp="2023-07-19", from_visit=0, title="Visit 1", url="https://example.com",
-                           transition="link", duration=10)
-        cls.event2 = Event(2, "2023-07-20", 1, "Visit 2", "https://example.com/page", "link", 5)
-        cls.event3 = Event(3, "2023-07-21", 2, "Visit 3", "https://example.com/page/page", "link", 0)
+        cls.event1 = Event(1, 1364207461, 0, "Visit 1", "https://example.com", "link", 10)
+        cls.event2 = Event(2, 1020186737, 1, "Visit 2", "https://example.com/page", "link", 5)
+        cls.event3 = Event(3, 1221717683, 2, "Visit 3", "https://example.com/page/page", "link", 0)
+
         cls.case1 = Case([cls.event1, cls.event2])
         cls.case2 = Case([cls.event2, cls.event3])
 

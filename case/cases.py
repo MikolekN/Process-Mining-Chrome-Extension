@@ -1,4 +1,22 @@
-from events import Event
+from event.events import Event
+
+
+class Case:
+    def __init__(self, case_events=None):
+        self.events = []
+        if case_events is not None:
+            if isinstance(case_events, Event):
+                self.events = [case_events]
+            elif isinstance(case_events, list):
+                if not all(isinstance(event, Event) for event in case_events):
+                    raise ValueError("All events in a case must be of type Event.")
+                self.events = case_events
+            else:
+                raise ValueError("Invalid input in Case initialization.")
+
+    def __str__(self, filtered=False):
+        event_strings = [str(event) for event in self.events if event.duration != 0 or not filtered]
+        return " -> ".join(event_strings) if event_strings else ""
 
 
 class Cases:
@@ -28,7 +46,7 @@ class Cases:
     def update_cases(self, event):
         added = False
         for case in self.cases:
-            if event.from_visit == case.events[-1].event_id:
+            if event.fromVisit == case.events[-1].eventId:
                 added = True
                 case.events.append(event)
         if not added:
@@ -37,21 +55,3 @@ class Cases:
     def print_cases(self):
         for case_index, case in enumerate(self.cases):
             print(f"{case_index + 1}) " + str(case))
-
-
-class Case:
-    def __init__(self, case_events=None):
-        self.events = []
-        if case_events is not None:
-            if isinstance(case_events, Event):
-                self.events = [case_events]
-            elif isinstance(case_events, list):
-                if not all(isinstance(event, Event) for event in case_events):
-                    raise ValueError("All events in a case must be of type Event.")
-                self.events = case_events
-            else:
-                raise ValueError("Invalid input in Case initialization.")
-
-    def __str__(self, filtered=False):
-        event_strings = [str(event) for event in self.events if event.duration != 0 or not filtered]
-        return " -> ".join(event_strings) if event_strings else ""
