@@ -98,6 +98,20 @@ def print_eventlog(cases, filtered):
                 print(" | ".join(row))
 
 
+def print_cases(events, filtered):
+    case_index = 0
+    for event in events.events:
+        if event.tip:
+            case = [event]
+            while event.fromVisit != 0:
+                event = events.get_event(event.fromVisit)
+                case.append(event)
+            case.reverse()
+            events_string = [str(event) for event in case if not filtered or event.duration != 0]
+            print(f"{case_index + 1}) " + (" -> ".join(events_string) if events_string else ""))
+            case_index += 1
+
+
 def main():
     response = requests.get('http://localhost:1234/events')
     filtered = False
@@ -109,13 +123,13 @@ def main():
         print(f"Current output is {'filtered' if filtered else 'not filtered'}")
         prompt = input("[.] Type:\n[.] <a> to print full events information\n[.] <b> to print events\n[.] <c> to print "
                        "cases\n[.] <d> to print event log\n[.] <e> to export to csv\n[.] <f> to export to xes\n[.] "
-                       "<g> to toggle filtering out 0 in duration\n[>] ")
+                       "<g> to toggle filtering out 0 in duration\n[.] <h> to print cases using just events list\n[>] ")
         if prompt == "a":
             events.print_full_events(filtered)
         elif prompt == "b":
             events.print_events(filtered)
         elif prompt == "c":
-            cases.print_cases()
+            cases.print_cases(filtered)
         elif prompt == "d":
             print_eventlog(cases, filtered)
         elif prompt == "e":
@@ -124,6 +138,8 @@ def main():
             export_to_xes(cases)
         elif prompt == "g":
             filtered = not filtered
+        elif prompt == "h":
+            print_cases(events, filtered)
         else:
             break
 

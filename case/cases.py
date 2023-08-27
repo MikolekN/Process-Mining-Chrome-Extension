@@ -14,9 +14,9 @@ class Case:
             else:
                 raise ValueError("Invalid input in Case initialization.")
 
-    def __str__(self, filtered=False):
-        event_strings = [str(event) for event in self.events if event.duration != 0 or not filtered]
-        return " -> ".join(event_strings) if event_strings else ""
+    def toString(self, filtered):
+        events_string = [str(event) for event in self.events if not filtered or event.duration != 0]
+        return " -> ".join(events_string) if events_string else ""
 
 
 class Cases:
@@ -45,13 +45,26 @@ class Cases:
 
     def update_cases(self, event):
         added = False
-        for case in self.cases:
-            if event.fromVisit == case.events[-1].eventId:
-                added = True
-                case.events.append(event)
+        if event.fromVisit != 0:
+            for case in self.cases:
+                if event.fromVisit == case.events[-1].eventId:
+                    added = True
+                    case.events.append(event)
+                    break
+
+                for index, e in enumerate(case.events):
+                    if e.eventId == event.fromVisit:
+                        added = True
+                        events = case.events[:index+1]
+                        events.append(event)
+                        self.append(Case(events))
+                        break
+
+                if added:
+                    break
         if not added:
             self.cases.append(Case(event))
 
-    def print_cases(self):
+    def print_cases(self, filtered=False):
         for case_index, case in enumerate(self.cases):
-            print(f"{case_index + 1}) " + str(case))
+            print(f"{case_index + 1}) " + case.toString(filtered))
