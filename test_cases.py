@@ -31,6 +31,7 @@ class TestCases(unittest.TestCase):
         cls.event1 = Event(1, 1364207461, 0, "Visit 1", "https://example.com", "link", 10)
         cls.event2 = Event(2, 1020186737, 1, "Visit 2", "https://example.com/page", "link", 5)
         cls.event3 = Event(3, 1221717683, 2, "Visit 3", "https://example.com/page/page", "link", 0)
+        cls.event4 = Event(4, 1761405494, 1, "Visit 4", "https://example.com/page/page/page", "link", 995)
 
         cls.case1 = Case([cls.event1, cls.event2])
         cls.case2 = Case([cls.event2, cls.event3])
@@ -65,10 +66,24 @@ class TestCases(unittest.TestCase):
         cases.remove(self.case1)
         self.assertEqual(len(cases.cases), 0)
 
-    def test_update_cases(self):
-        cases = Cases([self.case1, self.case2])
-        cases.update_cases(self.event3)
-        self.assertEqual(len(cases.cases[0].events), 3)
-        self.assertEqual(cases.cases[0].events[-1], self.event3)
-        self.assertEqual(len(cases.cases[1].events), 2)
-        self.assertEqual(cases.cases[1].events[-1], self.event3)
+    def test_update_empty_cases(self):
+        cases = Cases()
+        cases.update_cases(self.event1)
+        self.assertEqual(len(cases.cases), 1)
+        self.assertEqual(cases.cases[0].events[0], self.event1)
+
+    def test_update_simple_cases(self):
+        cases = Cases(Case(self.event1))
+        cases.update_cases(self.event2)
+        self.assertEqual(len(cases.cases), 1)
+        self.assertEqual(cases.cases[0].events[0], self.event1)
+        self.assertEqual(cases.cases[0].events[1], self.event2)
+
+    def test_update_complex_cases(self):
+        cases = Cases(Case([self.event1, self.event2]))
+        cases.update_cases(self.event4)
+        self.assertEqual(len(cases.cases), 2)
+        self.assertEqual(cases.cases[0].events[0], self.event1)
+        self.assertEqual(cases.cases[0].events[1], self.event2)
+        self.assertEqual(cases.cases[1].events[0], self.event1)
+        self.assertEqual(cases.cases[1].events[1], self.event4)
