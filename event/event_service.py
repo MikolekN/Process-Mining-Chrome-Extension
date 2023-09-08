@@ -35,7 +35,7 @@ class EventService:
             'tip': event['tip'],
             '_ownerId': str(event['_ownerId']),
             '_id': str(event['_id'])
-        }
+        } if event else None
 
     def get_event_by_event_id(self, eventId):
         event = self.repository.get_event_by_event_id(eventId)
@@ -50,4 +50,4 @@ class EventService:
             'tip': event['tip'],
             '_ownerId': str(event['_ownerId']),
             '_id': str(event['_id'])
-        }
+        } if event else None
