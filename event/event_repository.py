@@ -5,12 +5,12 @@ from event.events import Event
 
 # TODO handle no response (no returned item)
 class EventRepository:
-    def __init__(self):
+    def __init__(self, db_name='chrome_test_v3'):
         # Connect to the MongoDB server
         client = MongoClient('localhost', 27017)
 
         # Access the database and collection
-        db = client['chrome_test_v3']
+        db = client[db_name]
         self.events_collection = db['events']
 
     def get_events(self):
