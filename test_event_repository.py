@@ -1,5 +1,7 @@
 import unittest
 from pymongo import MongoClient
+import config
+import sys
 
 from event.event_repository import EventRepository
 
@@ -7,9 +9,9 @@ from event.event_repository import EventRepository
 class TestEventRepository(unittest.TestCase):
     def setUp(self):
         self.client = MongoClient('localhost', 27017)
-        self.db_name = 'test_chrome_db'
+        self.db_name = config.TestConfig.DB_NAME
         self.db = self.client[self.db_name]
-        self.repository = EventRepository(self.db_name)
+        self.repository = EventRepository()
         self.event_data = {
             '_id': '1',
             '_ownerId': '1',

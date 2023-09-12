@@ -1,15 +1,15 @@
 from pymongo import MongoClient
+import sys
 
-from event.events import Event
+import config
 
 
 # TODO handle no response (no returned item)
 class EventRepository:
-    def __init__(self, db_name='chrome_test_v3'):
-        # Connect to the MongoDB server
+    def __init__(self):
+        testing_mode = '--testing' in sys.argv
+        db_name = config.TestConfig.DB_NAME if testing_mode else config.Config.DB_NAME
         client = MongoClient('localhost', 27017)
-
-        # Access the database and collection
         db = client[db_name]
         self.events_collection = db['events']
 

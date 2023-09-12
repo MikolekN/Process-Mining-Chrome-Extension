@@ -5,9 +5,9 @@ from unittest.mock import Mock
 from bson import ObjectId
 from pymongo import MongoClient
 from flask import Flask
+
+import config
 from event.event_controller import event_blueprint
-from event.event_service import EventService
-from event.event_repository import EventRepository
 
 
 class EventControllerTestCase(TestCase):
@@ -17,7 +17,7 @@ class EventControllerTestCase(TestCase):
         self.client = self.app.test_client()
 
         self.db_client = MongoClient('localhost', 27017)
-        self.db_name = 'test_chrome_db'
+        self.db_name = config.TestConfig.DB_NAME
         self.db = self.db_client[self.db_name]
 
         self.event_save_data = {

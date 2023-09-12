@@ -1,5 +1,6 @@
 import unittest
 
+
 class CustomTextTestResult(unittest.TextTestResult):
     COLOR_GREEN = '\033[92m'
     COLOR_RED = '\033[91m'
