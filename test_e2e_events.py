@@ -1,3 +1,4 @@
+import json
 import unittest
 from unittest import TestCase
 from unittest.mock import Mock
@@ -57,6 +58,14 @@ class EventControllerTestCase(TestCase):
         response = self.client.get('/events')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, [self.expected_received_data])
+
+    def test_post_events(self):
+        mock_event = {'eventId': 1, 'timestamp': '2023-07-18', 'fromVisit': 0, 'title': 'Event 1',
+                      'url': 'http://example.com', 'transition': 'click', 'duration': 10, 'tip': True}
+        response = self.client.post('/events', data=json.dumps(mock_event), content_type='application/json')
+        expected_event = response.json
+        del expected_event['_id']
+        self.assertEqual(expected_event, mock_event)
 
     def test_get_event_by_id_empty(self):
         response = self.client.get('/events/event/64df4cf73595073f910c378d')

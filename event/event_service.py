@@ -49,9 +49,8 @@ class EventService:
         post = self.repository.post_events(validated_data)
         if not post.ok:
             return post
-        posted_id = post.data
 
-        return Success(posted_id)
+        return Success(post.data)
 
     def get_event_by_id(self, _id):
         event = self.repository.get_event_by_id(ObjectId(_id))

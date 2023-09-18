@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import Mock
 from event.event_service import EventService
+from method_return import Success
 
 
 class TestEventService(unittest.TestCase):
@@ -25,6 +26,29 @@ class TestEventService(unittest.TestCase):
         self.mock_repository.get_events.return_value = mock_events
         result = self.event_service.get_events()
         self.assertEqual(result, mock_events)
+
+    def test_validate_event_missing_key(self):
+        mock_event = {'timestamp': '2023-07-18', 'fromVisit': 0, 'title': 'Event 1',
+                      'url': 'http://example.com', 'transition': 'click', 'duration': 10, 'tip': True}
+        result = self.event_service.validate_data(mock_event)
+        self.assertEqual(result.ok, False)
+        self.assertIsNotNone(result.message)
+
+    def test_validate_event_additional_key(self):
+        expected_event = {'eventId': 1, 'timestamp': '2023-07-18', 'fromVisit': 0, 'title': 'Event 1',
+                          'url': 'http://example.com', 'transition': 'click', 'duration': 10, 'tip': True}
+        mock_event = {'eventId': 1, 'timestamp': '2023-07-18', 'fromVisit': 0, 'title': 'Event 1',
+                      'url': 'http://example.com', 'transition': 'click', 'duration': 10, 'tip': True, 'new': "NEW"}
+        result = self.event_service.validate_data(mock_event)
+        self.assertEqual(result.ok, True)
+        self.assertEqual(result.data, expected_event)
+
+    def test_post_events(self):
+        mock_event = {'eventId': 1, 'timestamp': '2023-07-18', 'fromVisit': 0, 'title': 'Event 1',
+                      'url': 'http://example.com', 'transition': 'click', 'duration': 10, 'tip': True}
+        self.mock_repository.post_events.return_value = Success(1)
+        result = self.event_service.post_events(mock_event)
+        self.assertEqual(result.ok, True)
 
     def test_get_event_by_id_empty(self):
         mock_event = None

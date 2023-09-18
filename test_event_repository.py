@@ -38,6 +38,14 @@ class TestEventRepository(unittest.TestCase):
         self.assertEqual(len(events.distinct('_id')), 1)
         self.assertEqual(events[0], self.event_data)
 
+    def test_post_events(self):
+        mock_event = {'eventId': 1, 'timestamp': '2023-07-18', 'fromVisit': 0, 'title': 'Event 1',
+                      'url': 'http://example.com', 'transition': 'click', 'duration': 10, 'tip': True}
+        result = self.repository.post_events(mock_event)
+        self.assertEqual(result.ok, True)
+        saved_event = self.db.events.find_one({"_id": result.data})
+        self.assertEqual(saved_event, mock_event)
+
     def test_get_event_by_id_empty(self):
         event = self.repository.get_event_by_id('1')
         self.assertIsNone(event)

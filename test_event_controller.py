@@ -1,9 +1,11 @@
+import json
 import unittest
 from flask import Flask, request, jsonify
 from unittest.mock import Mock, patch
 
 from event.event_controller import event_blueprint
 from event.event_service import EventService
+from method_return import Success
 
 
 class TestEventController(unittest.TestCase):
@@ -42,6 +44,15 @@ class TestEventController(unittest.TestCase):
             response = self.client.get('/events')
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json, [self.event])
+
+    def test_post_events(self):
+        with patch('event.event_controller.event_service', autospec=True) as mock_service:
+            mock_service.post_events.return_value = Success(1)
+            mock_service.get_event_by_id.return_value = self.event
+
+            response = self.client.post('/events', data=json.dumps(self.event), content_type='application/json')
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json, self.event)
 
     def test_get_event_by_id_empty(self):
         with patch('event.event_controller.event_service', autospec=True) as mock_service:
