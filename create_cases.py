@@ -40,7 +40,7 @@ def main():
     events_data = []
     for event in events.events:
         events_data.append(
-            {"_ownerId": user_id, "eventId": event.eventId, "timestamp": event.timestamp, "fromVisit": event.fromVisit,
+            {"eventId": event.eventId, "timestamp": event.timestamp, "fromVisit": event.fromVisit,
              "title": event.title, "url": event.url, "transition": event.transition, "duration": event.duration,
              "tip": event.tip})
 
@@ -55,7 +55,7 @@ def main():
 
     cases_data = []
     for case in cases.cases:
-        cases_data.append({"_ownerId": user_id, "caseEvents": [findId(event) for event in case.events]})
+        cases_data.append({"caseEvents": [findId(event) for event in case.events]})
 
     case_ids = []
     for case in cases_data:

@@ -2,9 +2,9 @@ from pymongo import MongoClient
 import sys
 
 import config
+from method_return import Success, Failure
 
 
-# TODO handle no response (no returned item)
 class EventRepository:
     def __init__(self):
         testing_mode = '--testing' in sys.argv
@@ -16,6 +16,13 @@ class EventRepository:
     def get_events(self):
         events = self.events_collection.find()
         return events
+
+    def post_events(self, data):
+        try:
+            result = self.events_collection.insert_one(data)
+            return Success(result.inserted_id)
+        except Exception:
+            return Failure("An error occurred while inserting event to database")
 
     def get_event_by_id(self, _id):
         event = self.events_collection.find_one({'_id': _id})

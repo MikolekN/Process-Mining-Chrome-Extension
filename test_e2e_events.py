@@ -22,7 +22,6 @@ class EventControllerTestCase(TestCase):
 
         self.event_save_data = {
             '_id': ObjectId('64df4cf73595073f910c378d'),
-            '_ownerId': ObjectId('64fefba26477d407afbc6bca'),
             'eventId': 1,
             'timestamp': '2023-07-18',
             'fromVisit': 0,
@@ -34,7 +33,6 @@ class EventControllerTestCase(TestCase):
         }
         self.expected_received_data = {
             '_id': '64df4cf73595073f910c378d',
-            '_ownerId': '64fefba26477d407afbc6bca',
             'eventId': 1,
             'timestamp': '2023-07-18',
             'fromVisit': 0,

@@ -11,7 +11,6 @@ class CaseService:
         cases = self.repository.get_cases()
         return [{
             'caseEvents': [str(_id) for _id in case['caseEvents']],
-            '_ownerId': str(case['_ownerId']),
             '_id': str(case['_id'])
         } for case in cases]
 
@@ -19,6 +18,5 @@ class CaseService:
         case = self.repository.get_case_by_id(ObjectId(_id))
         return {
             'caseEvents': [str(_id) for _id in case['caseEvents']],
-            '_ownerId': str(case['_ownerId']),
             '_id': str(case['_id'])
         }

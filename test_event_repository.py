@@ -14,7 +14,6 @@ class TestEventRepository(unittest.TestCase):
         self.repository = EventRepository()
         self.event_data = {
             '_id': '1',
-            '_ownerId': '1',
             'eventId': 1,
             'timestamp': '2023-07-18',
             'fromVisit': 0,

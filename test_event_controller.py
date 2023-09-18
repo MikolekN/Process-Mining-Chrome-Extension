@@ -24,7 +24,6 @@ class TestEventController(unittest.TestCase):
             'transition': 'click',
             'duration': 10,
             'tip': True,
-            '_ownerId': '1',
             '_id': '1'
         }
 
