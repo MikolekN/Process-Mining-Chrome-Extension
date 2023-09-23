@@ -1,5 +1,6 @@
+from flask import Blueprint
+
 from case.case_service import CaseService
-from flask import jsonify, Blueprint
 
 case_blueprint = Blueprint('case_blueprint', __name__)
 case_service = CaseService()

@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import Mock
+
 from event.event_service import EventService
 from method_return import Success
 

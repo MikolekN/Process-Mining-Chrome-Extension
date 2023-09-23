@@ -1,7 +1,8 @@
+import datetime
 import json
+
 import pandas as pd
 import pm4py
-import datetime
 import requests as requests
 
 from case.cases import Cases

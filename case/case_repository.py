@@ -1,7 +1,5 @@
 from pymongo import MongoClient
 
-from case.cases import Case
-
 
 class CaseRepository:
     def __init__(self):
