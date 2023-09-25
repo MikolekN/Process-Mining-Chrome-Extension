@@ -14,9 +14,6 @@ class EventService:
         self.events = Events(update_cases=self.cases.update_cases)
 
     def get_events(self):
-        if len(self.events.events) != 0:
-            return Success(json.loads(json.dumps(self.events.events, default=vars)))
-
         response = self.repository.get_events()
 
         if response.ok:
