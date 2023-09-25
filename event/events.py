@@ -1,5 +1,6 @@
 class Event:
-    def __init__(self, eventId, timestamp, fromVisit, title, url, transition, duration, tip=True):
+    def __init__(self, _id, eventId, timestamp, fromVisit, title, url, transition, duration, tip=True):
+        self._id = _id
         self.eventId = int(eventId)
         self.timestamp = int(timestamp)
         self.fromVisit = int(fromVisit)
@@ -10,10 +11,11 @@ class Event:
         self.tip = bool(tip)
 
     def __str__(self):
-        return str(self.eventId)
+        return f"_id: {self._id}, eventId: {self.eventId}"
 
     def serialize(self):
         return {
+            "_id": self._id,
             "eventId": self.eventId,
             "timestamp": self.timestamp,
             "fromVisit": self.fromVisit,
@@ -27,6 +29,7 @@ class Event:
     @classmethod
     def deserialize(cls, data):
         return Event(eventId=data['eventId'],
+                     _id=data['_id'],
                      timestamp=data['timestamp'],
                      fromVisit=data['fromVisit'],
                      title=data['title'],
