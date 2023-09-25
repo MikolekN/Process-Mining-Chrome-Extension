@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from flask import Flask
 
 from event import event_controller
-from method_return import Success
+from method_return import Success, Failure
 
 
 class TestEventController(unittest.TestCase):
@@ -31,13 +31,13 @@ class TestEventController(unittest.TestCase):
         }
 
     def test_get_events_empty(self):
-        self.mock_service.get_events.return_value = []
+        self.mock_service.get_events.return_value = Success([])
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, [])
 
     def test_get_events_full(self):
-        self.mock_service.get_events.return_value = [self.event]
+        self.mock_service.get_events.return_value = Success([self.event])
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, [self.event])
@@ -49,25 +49,23 @@ class TestEventController(unittest.TestCase):
         self.assertEqual(response.json, self.event)
 
     def test_get_event_by_id_empty(self):
-        self.mock_service.get_event_by_id.return_value = None
+        self.mock_service.get_event_by_id.return_value = Failure("No event with given _id was found.")
         response = self.client.get('/event/1')
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.json, {'message': 'Event not found'})
 
     def test_get_event_by_id_full(self):
-        self.mock_service.get_event_by_id.return_value = self.event
+        self.mock_service.get_event_by_id.return_value = Success(self.event)
         response = self.client.get('/event/1')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, self.event)
 
     def test_get_event_by_event_id_empty(self):
-        self.mock_service.get_event_by_event_id.return_value = None
+        self.mock_service.get_event_by_event_id.return_value = Failure("No event with given eventId was found.")
         response = self.client.get('/eventId/1')
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.json, {'message': 'Event not found'})
 
     def test_get_event_by_event_id_full(self):
-        self.mock_service.get_event_by_event_id.return_value = self.event
+        self.mock_service.get_event_by_event_id.return_value = Success(self.event)
         response = self.client.get('/eventId/1')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, self.event)

@@ -1,4 +1,6 @@
+from case.cases import Cases
 from event.event_repository import EventRepository
+from event.events import Events
 from method_return import Success, Failure
 
 
@@ -7,8 +9,8 @@ class EventService:
         self.repository = EventRepository(testing)
 
     def get_events(self):
-        events = self.repository.get_events()
-        return events
+        response = self.repository.get_events()
+        return response
 
     def validate_data(self, data):
         expected_keys = ['eventId',
@@ -36,9 +38,9 @@ class EventService:
         return post
 
     def get_event_by_id(self, _id):
-        event = self.repository.get_event_by_id(_id)
-        return event if event else None
+        response = self.repository.get_event_by_id(_id)
+        return response
 
     def get_event_by_event_id(self, eventId):
-        event = self.repository.get_event_by_event_id(eventId)
-        return event if event else None
+        response = self.repository.get_event_by_event_id(eventId)
+        return response

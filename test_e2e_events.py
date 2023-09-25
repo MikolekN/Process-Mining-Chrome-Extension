@@ -57,7 +57,7 @@ class EventControllerTestCase(TestCase):
     def test_get_event_by_id_empty(self):
         response = self.client.get('/event/64df4cf73595073f910c378d')
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.json, {'message': 'Event not found'})
+        self.assertEqual(response.json, "No event with given _id was found.")
 
     def test_get_event_by_id_full(self):
         with open(self.db, 'w') as file:
@@ -69,7 +69,7 @@ class EventControllerTestCase(TestCase):
     def test_get_event_by_event_id_empty(self):
         response = self.client.get('/eventId/1')
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.json, {'message': 'Event not found'})
+        self.assertEqual(response.json, "No event with given eventId was found.")
 
     def test_get_event_by_event_id_full(self):
         with open(self.db, 'w') as file:

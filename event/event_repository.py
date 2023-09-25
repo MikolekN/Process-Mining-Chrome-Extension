@@ -22,7 +22,7 @@ class EventRepository:
                     events = [events]
         except FileNotFoundError:
             events = []
-        return events
+        return Success(events)
 
     def create_file_if_not_exists(self):
         try:
@@ -42,7 +42,7 @@ class EventRepository:
 
         for event in events:
             if event['eventId'] == data['eventId']:
-                return Failure("An event with given eventId already exists")
+                return Failure("An event with given eventId already exists.")
 
         data['_id'] = str(bson.ObjectId())
         events.append(data)
@@ -62,8 +62,8 @@ class EventRepository:
             events = []
         for event in events:
             if event['_id'] == _id:
-                return event
-        return None
+                return Success(event)
+        return Failure("No event with given _id was found.")
 
     def get_event_by_event_id(self, eventId):
         try:
@@ -75,5 +75,5 @@ class EventRepository:
             events = []
         for event in events:
             if event['eventId'] == eventId:
-                return event
-        return None
+                return Success(event)
+        return Failure("No event with given eventId was found.")

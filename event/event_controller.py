@@ -13,29 +13,32 @@ class EventController:
 
         @event_blueprint.route('', methods=['GET'])
         def get_events():
-            events = self.service.get_events()
-            return events
+            result = self.service.get_events()
+            if result.ok:
+                return make_response(jsonify(result.data), 200)
+            else:
+                return make_response(jsonify(result.message), 500)
 
         @event_blueprint.route('', methods=['POST'])
         def post_events():
             data = request.get_json()
             result = self.service.post_events(data)
-            if not result.ok:
-                return result.message
-            return result.data
+            if result.ok:
+                return make_response(jsonify(result.data), 200)
+            return make_response(jsonify(result.message), 500)
 
         @event_blueprint.route('/event/<string:_id>', methods=['GET'])
         def get_event_by_id(_id):
-            event = self.service.get_event_by_id(_id)
-            if event is None:
-                return make_response(jsonify({'message': 'Event not found'}), 404)
-            return event
+            result = self.service.get_event_by_id(_id)
+            if result.ok:
+                return make_response(jsonify(result.data), 200)
+            return make_response(jsonify(result.message), 404)
 
         @event_blueprint.route('/eventId/<int:eventId>', methods=['GET'])
         def get_event_by_event_id(eventId):
-            event = self.service.get_event_by_event_id(eventId)
-            if event is None:
-                return make_response(jsonify({'message': 'Event not found'}), 404)
-            return event
+            result = self.service.get_event_by_event_id(eventId)
+            if result.ok:
+                return make_response(jsonify(result.data), 200)
+            return make_response(jsonify(result.message), 404)
 
         return event_blueprint

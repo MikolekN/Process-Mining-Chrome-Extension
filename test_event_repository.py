@@ -31,39 +31,46 @@ class TestEventRepository(unittest.TestCase):
         os.remove(self.db)
 
     def test_get_events_empty(self):
-        events = self.repository.get_events()
-        self.assertEqual(len(events), 0)
+        response = self.repository.get_events()
+        self.assertTrue(response.ok)
+        self.assertEqual(len(response.data), 0)
 
     def test_get_events_full(self):
         with open(self.db, 'w') as file:
             json.dump(self.event, file)
-        events = self.repository.get_events()
+        response = self.repository.get_events()
+        self.assertTrue(response.ok)
+        events = response.data
         self.assertEqual(len(events), 1)
         self.assertEqual(events[0], self.event)
 
     def test_post_events(self):
-        result = self.repository.post_events(self.event)
-        self.assertEqual(result.ok, True)
+        response = self.repository.post_events(self.event)
+        self.assertEqual(response.ok, True)
         expected_event = deepcopy(self.event)
-        expected_event['_id'] = result.data['_id']
-        self.assertEqual(result.data, self.event)
+        expected_event['_id'] = response.data['_id']
+        self.assertEqual(response.data, self.event)
 
     def test_get_event_by_id_empty(self):
-        event = self.repository.get_event_by_id('1')
-        self.assertIsNone(event)
+        response = self.repository.get_event_by_id('1')
+        self.assertFalse(response.ok)
+        self.assertEqual(response.message, "No event with given _id was found.")
 
     def test_get_event_by_id_full(self):
         with open(self.db, 'w') as file:
             json.dump(self.event, file)
-        event = self.repository.get_event_by_id('1')
-        self.assertEqual(event, self.event)
+        response = self.repository.get_event_by_id('1')
+        self.assertTrue(response.ok)
+        self.assertEqual(response.data, self.event)
 
     def test_get_event_by_event_id_empty(self):
-        event = self.repository.get_event_by_event_id(1)
-        self.assertIsNone(event)
+        response = self.repository.get_event_by_event_id(1)
+        self.assertFalse(response.ok)
+        self.assertEqual(response.message, "No event with given eventId was found.")
 
     def test_get_event_by_event_id_full(self):
         with open(self.db, 'w') as file:
             json.dump(self.event, file)
-        event = self.repository.get_event_by_event_id(1)
-        self.assertEqual(event, self.event)
+        response = self.repository.get_event_by_event_id(1)
+        self.assertTrue(response.ok)
+        self.assertEqual(response.data, self.event)
