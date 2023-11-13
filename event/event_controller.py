@@ -11,10 +11,16 @@ class EventController:
     def construct_event_blueprint(self):
         event_blueprint = Blueprint('event_blueprint', __name__)
 
+        def parse_date_data(request):
+            if request.is_json:
+                return request.get_json()
+            else:
+                return {}
+
         # Returns raw json data filtered by provided startDate and endDate
         @event_blueprint.route('', methods=['GET'])
         def get_events():
-            data = request.get_json()
+            data = parse_date_data(request)
             result = self.service.get_events(data)
             if result.ok:
                 return make_response(jsonify(result.data), 200)
@@ -22,7 +28,7 @@ class EventController:
 
         @event_blueprint.route('', methods=['POST'])
         def post_events():
-            data = request.get_json()
+            data = parse_date_data(request)
             result = self.service.post_events(data)
             if result.ok:
                 return make_response(jsonify(result.data), 200)
@@ -59,7 +65,7 @@ class EventController:
 
         @event_blueprint.route('/eventlog', methods=['GET'])
         def get_eventlog():
-            data = request.get_json()
+            data = parse_date_data(request)
             result = self.service.get_eventlog(data)
             if result.ok:
                 return make_response(jsonify(result.data), 200)
@@ -67,7 +73,7 @@ class EventController:
 
         @event_blueprint.route('/xes', methods=['GET'])
         def get_xes():
-            data = request.get_json()
+            data = parse_date_data(request)
             result = self.service.get_xes(data)
             if result.ok:
                 xes_path = result.data
@@ -83,10 +89,7 @@ class EventController:
 
         @event_blueprint.route('/image', methods=['GET'])
         def get_image():
-            if request.is_json:
-                data = request.get_json()
-            else:
-                data = {}
+            data = parse_date_data(request)
             result = self.service.get_image(data)
             if result.ok:
                 image_path = result.data

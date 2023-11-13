@@ -151,8 +151,8 @@ class EventService:
 
         post = self.repository.post_events(validated_data)
 
-        if post.ok and (self.end_date is None or datetime.fromtimestamp(post['timestamp']) <= self.end_date):
-            self.is_model_up_to_date = False
+        # if post.ok and (self.end_date is None or datetime.fromtimestamp(post.data['timestamp']) <= self.end_date):
+        #     self.is_model_up_to_date = False
 
         return post
 
