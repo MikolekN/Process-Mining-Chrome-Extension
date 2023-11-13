@@ -5,4 +5,4 @@ class TestConfig:
 
 class Config:
     DEBUG = False
-    DB_NAME = 'chrome_test_v4'
+    DB_NAME = 'hist'

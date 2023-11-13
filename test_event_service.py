@@ -31,7 +31,7 @@ class TestEventService(unittest.TestCase):
     def test_validate_event_missing_key(self):
         mock_event = {'timestamp': '2023-07-18', 'fromVisit': 0, 'title': 'Event 1',
                       'url': 'http://example.com', 'transition': 'click', 'duration': 10, 'tip': True}
-        result = self.event_service.validate_data(mock_event)
+        result = validate_data(mock_event)
         self.assertEqual(result.ok, False)
         self.assertIsNotNone(result.message)
 
@@ -40,7 +40,7 @@ class TestEventService(unittest.TestCase):
                           'url': 'http://example.com', 'transition': 'click', 'duration': 10, 'tip': True}
         mock_event = {'eventId': 1, 'timestamp': '2023-07-18', 'fromVisit': 0, 'title': 'Event 1',
                       'url': 'http://example.com', 'transition': 'click', 'duration': 10, 'tip': True, 'new': "NEW"}
-        result = self.event_service.validate_data(mock_event)
+        result = validate_data(mock_event)
         self.assertEqual(result.ok, True)
         self.assertEqual(result.data, expected_event)
 

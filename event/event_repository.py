@@ -77,3 +77,6 @@ class EventRepository:
             if event['eventId'] == eventId:
                 return Success(event)
         return Failure("No event with given eventId was found.")
+
+    def get_database(self):
+        return Success(self.db)
