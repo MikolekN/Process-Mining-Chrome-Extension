@@ -1,4 +1,11 @@
 .idea
-eventlog_CSV.csv
-eventlog_XES.xes
 __pycache__
+*.csv
+*.xes
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tif
+*.tiff
