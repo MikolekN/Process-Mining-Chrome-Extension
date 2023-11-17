@@ -1,0 +1,30 @@
+* {
+    padding: 0;
+    margin: 0;
+    outline: 0;
+    overflow: hidden;
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 500px; /* max: 1000px */
+  height: 500px; /* max: 750px */
+  overflow: hidden;
+}
+#zoom {
+  width: 100%;
+  height: 100%;
+  transform-origin: 0px 0px;
+  transform: scale(0.2) translate(0px, 0px);
+  cursor: grab;
+}
+div#zoom > img {
+  width: 100%;
+  height: auto;
+}
+
+/* Content script styles */
+.my-extension-scrollbars {
+  overflow: scroll !important;
+  /* Add any other styles you need */
+}

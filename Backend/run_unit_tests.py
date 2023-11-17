@@ -29,7 +29,7 @@ class CustomTextTestResult(unittest.TextTestResult):
 if __name__ == '__main__':
     # Discover and run all tests
     test_loader = unittest.TestLoader()
-    test_suite = test_loader.discover(start_dir='.', pattern='test_*.py')
+    test_suite = test_loader.discover(start_dir='..', pattern='test_*.py')
 
     # Run the tests
     test_runner = unittest.TextTestRunner(resultclass=CustomTextTestResult)

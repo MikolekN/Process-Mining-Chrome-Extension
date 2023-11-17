@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import json
 import pandas as pd
 import pm4py
+import pytz
 
 from case.cases import Cases, Case
 from event.event_repository import EventRepository
@@ -192,7 +193,7 @@ class EventService:
                 case_ids.append(str(case_index))
                 event_ids.append(event.eventId)
                 from_ids.append(event.fromVisit)
-                timestamps.append(datetime(1601, 1, 1) + timedelta(microseconds=event.timestamp))
+                timestamps.append(datetime(1970, 1, 1) + timedelta(milliseconds=event.timestamp))
                 transitions.append(event.transition)
                 durations.append(event.duration)
                 titles.append(event.title)
@@ -208,7 +209,6 @@ class EventService:
             "title": titles,
             "url": urls,
         }
-
         df = pd.DataFrame(data)
 
         return df
@@ -216,7 +216,7 @@ class EventService:
     def export_to_xes(self):
         df = self.read_data_to_export()
         xes_path = os.path.join(os.path.expanduser('~'), "XES.xes")
-        pm4py.write_xes(df, xes_path, "case_id")
+        pm4py.write_xes(df, xes_path, activity_key='title', timestamp_key='timestamp', case_id_key='case_id')
         return Success(xes_path)
 
     def eventlog_to_json(self):

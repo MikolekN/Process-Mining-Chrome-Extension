@@ -34,7 +34,6 @@ class EventRepository:
 
     def post_events(self, data):
         self.create_file_if_not_exists()
-
         with open(self.db, 'r') as file:
             events = json.load(file)
             if not isinstance(events, list):

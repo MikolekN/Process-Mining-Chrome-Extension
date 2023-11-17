@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome History Dashboard</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./tabs.css">
+</head>
+
+<body>
+    <header>
+        <h1>Process Mining Extension</h1>
+		<script src="./scripts.js"></script>
+        <script src="./zoom.js"></script>
+        <script src="./tabs.js"></script>
+    </header>
+
+	<div>
+		<p>Click here to export Database:</p>
+        <button id="get-database">GET</button>
+		<label for="start">Start date:</label>
+		<!-- value może przyjąć wartość obecnej daty -->
+		<input type="date" id="start" name="interval-start" value="2023-11-01" min="2023-11-01" />
+		<label for="end">End date:</label>
+		<input type="date" id="end" name="interval-end" value="2023-11-01" min="2023-11-01" />
+        <p>Click here to export Event Log in XES:</p>
+        <button id="get-eventlog-xes">GET</button>
+		<p>Click here to get Event Log</p>
+        <button id="get-eventlog">GET</button>
+		<p>Click here to get iamge</p>
+        <button id="get-image">GET</button>
+	</div>
+
+	<div id="test-img-endpoint">
+
+	</div>
+ 
+
+	<div class="wrapper">
+		<h2 id="tabs-title">Process Mining Extension</h2>
+
+		<div class="tabs-container">
+			<ul aria-labelledby="tabs-title">
+				<li><a id="tab-1" href="#visualisation"> Visualisation </a></li>
+				<li><a id="tab-2" href="#event-log"> Event Log </a></li>
+			</ul>
+
+			<div class="tabs__panels flow">
+				<div id="visualisation" aria-labelledby="tab-1">
+					<div id="pm-model" class="zoom-outer tabcontent">
+						<p>Click here to update your visualisation graph:</p>
+						<button id="getVisualisatinImg">Update</button>
+						<div class="zoom-inner" id="zoom">
+							<img id="pm" src="images/bpmn.png" alt="PM visualization">
+						</div>
+					</div>
+				</div>
+				<div id="event-log" aria-labelledby="tab-2">
+					<p>
+						Place for event log 
+					</p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</body>
+</html>
