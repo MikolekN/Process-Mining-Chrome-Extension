@@ -208,7 +208,7 @@ class EventService:
             "title": titles,
             "url": urls,
         }
-        
+
         df = pd.DataFrame(data)
 
         return df
