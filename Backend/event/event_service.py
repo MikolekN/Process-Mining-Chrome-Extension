@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 import json
 import pandas as pd
 import pm4py
-import pytz
 
 from case.cases import Cases, Case
 from event.event_repository import EventRepository
