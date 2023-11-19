@@ -59,14 +59,14 @@ class EventService:
 
         self.start_date = None
         self.end_date = None
+
         self.is_model_up_to_date = False
-        # value at which the events will be filtered out (in milliseconds)
+
         self.filter_value = 0
 
         self.cases = Cases()
         self.events = Events(update_cases=self.cases.update_cases)
 
-    # Returns events as a raw json data.
     def get_events(self, data):
         validate = validate_date_data(data)
         if not validate.ok:
@@ -118,28 +118,51 @@ class EventService:
         return Success(filtered_cases)
 
     def set_date(self, date_data):
-        self.start_date = date_data['startDate']
-        self.end_date = date_data['endDate']
+        if date_data['startDate'] is not None:
+            new_start_date = datetime.strptime(date_data['startDate'], "%Y-%m-%d")
+            if self.start_date is None or new_start_date != datetime.strptime(self.start_date, "%Y-%m-%d"):
+                self.start_date = date_data['startDate']
+                self.is_model_up_to_date = False
+        elif self.start_date is not None:
+            self.start_date = None
+            self.is_model_up_to_date = False
+
+        if date_data['endDate'] is not None:
+            new_end_date = datetime.strptime(date_data['endDate'], "%Y-%m-%d")
+            if self.end_date is None or new_end_date != datetime.strptime(self.end_date, "%Y-%m-%d"):
+                self.end_date = date_data['endDate']
+                self.is_model_up_to_date = False
+        elif self.end_date is not None:
+            self.end_date = None
+            self.is_model_up_to_date = False
+
         return Success("Setting date successful")
 
     def set_filter(self, events):
-        new_start_date = self.start_date
-        if new_start_date is None:
-            new_start_date = datetime.fromtimestamp(events[0]['timestamp'] / 1000000)
+        if len(events) == 0:
+            if self.filter_value != 0:
+                self.filter_value = 0
+                self.is_model_up_to_date = False
         else:
-            new_start_date = datetime.strptime(new_start_date, "%Y-%m-%d")
+            if self.start_date is None:
+                new_start_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(events[0]['timestamp']))
+            else:
+                new_start_date = datetime.strptime(self.start_date, "%Y-%m-%d")
 
-        new_end_date = self.end_date
-        if new_end_date is None:
-            new_end_date = datetime.fromtimestamp(events[-1]['timestamp'] / 1000000)
-        else:
-            new_end_date = datetime.strptime(new_end_date, "%Y-%m-%d")
+            if self.end_date is None:
+                new_end_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(events[-1]['timestamp']))
+            else:
+                new_end_date = datetime.strptime(self.end_date, "%Y-%m-%d")
 
-        time_difference = new_end_date - new_start_date
-        if time_difference.days < 1:
-            self.filter_value = 0
-        else:
-            self.filter_value = 60000
+            time_difference = new_end_date - new_start_date
+            if time_difference.days < 1:
+                if self.filter_value != 0:
+                    self.filter_value = 0
+                    self.is_model_up_to_date = False
+            else:
+                if self.filter_value != 60000:
+                    self.filter_value = 60000
+                    self.is_model_up_to_date = False
 
         return Success("Setting filter successful")
 
@@ -151,8 +174,24 @@ class EventService:
 
         post = self.repository.post_events(validated_data)
 
-        # if post.ok and (self.end_date is None or datetime.fromtimestamp(post.data['timestamp']) <= self.end_date):
-        #     self.is_model_up_to_date = False
+        if post.ok:
+            event = Event.deserialize(post.data)
+            event_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(event.timestamp))
+            if self.start_date is None and self.end_date is None:
+                self.is_model_up_to_date = False
+            elif self.start_date is not None and self.end_date is not None:
+                start_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(self.start_date))
+                end_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(self.end_date))
+                if start_date < event_date < end_date:
+                    self.is_model_up_to_date = False
+            elif self.start_date is not None:
+                start_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(self.start_date))
+                if start_date < event_date:
+                    self.is_model_up_to_date = False
+            elif self.end_date is not None:
+                end_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(self.end_date))
+                if event_date < end_date:
+                    self.is_model_up_to_date = False
 
         return post
 
@@ -192,7 +231,7 @@ class EventService:
                 case_ids.append(str(case_index))
                 event_ids.append(event.eventId)
                 from_ids.append(event.fromVisit)
-                timestamps.append(datetime(1970, 1, 1) + timedelta(milliseconds=event.timestamp))
+                timestamps.append(datetime(1970, 1, 1) + timedelta(milliseconds=int(event.timestamp)))
                 transitions.append(event.transition)
                 durations.append(event.duration)
                 titles.append(event.title)
