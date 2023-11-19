@@ -61,11 +61,14 @@ class EventService:
         self.end_date = None
 
         self.is_model_up_to_date = False
+        self.is_cases_up_to_date = False
 
         self.filter_value = 0
 
         self.cases = Cases()
         self.events = Events(update_cases=self.cases.update_cases)
+
+        self.xes_path = None
 
     def get_events(self, data):
         validate = validate_date_data(data)
@@ -123,18 +126,22 @@ class EventService:
             if self.start_date is None or new_start_date != datetime.strptime(self.start_date, "%Y-%m-%d"):
                 self.start_date = date_data['startDate']
                 self.is_model_up_to_date = False
+                self.is_cases_up_to_date = False
         elif self.start_date is not None:
             self.start_date = None
             self.is_model_up_to_date = False
+            self.is_cases_up_to_date = False
 
         if date_data['endDate'] is not None:
             new_end_date = datetime.strptime(date_data['endDate'], "%Y-%m-%d")
             if self.end_date is None or new_end_date != datetime.strptime(self.end_date, "%Y-%m-%d"):
                 self.end_date = date_data['endDate']
                 self.is_model_up_to_date = False
+                self.is_cases_up_to_date = False
         elif self.end_date is not None:
             self.end_date = None
             self.is_model_up_to_date = False
+            self.is_cases_up_to_date = False
 
         return Success("Setting date successful")
 
@@ -143,6 +150,7 @@ class EventService:
             if self.filter_value != 0:
                 self.filter_value = 0
                 self.is_model_up_to_date = False
+                self.is_cases_up_to_date = False
         else:
             if self.start_date is None:
                 new_start_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(events[0]['timestamp']))
@@ -159,10 +167,12 @@ class EventService:
                 if self.filter_value != 0:
                     self.filter_value = 0
                     self.is_model_up_to_date = False
+                    self.is_cases_up_to_date = False
             else:
                 if self.filter_value != 60000:
                     self.filter_value = 60000
                     self.is_model_up_to_date = False
+                    self.is_cases_up_to_date = False
 
         return Success("Setting filter successful")
 
@@ -179,19 +189,23 @@ class EventService:
             event_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(event.timestamp))
             if self.start_date is None and self.end_date is None:
                 self.is_model_up_to_date = False
+                self.is_cases_up_to_date = False
             elif self.start_date is not None and self.end_date is not None:
                 start_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(self.start_date))
                 end_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(self.end_date))
                 if start_date < event_date < end_date:
                     self.is_model_up_to_date = False
+                    self.is_cases_up_to_date = False
             elif self.start_date is not None:
                 start_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(self.start_date))
                 if start_date < event_date:
                     self.is_model_up_to_date = False
+                    self.is_cases_up_to_date = False
             elif self.end_date is not None:
                 end_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(self.end_date))
                 if event_date < end_date:
                     self.is_model_up_to_date = False
+                    self.is_cases_up_to_date = False
 
         return post
 
@@ -282,13 +296,16 @@ class EventService:
 
         self.set_filter(response.data)
 
-        events = [Event.deserialize(e) for e in response.data]
-        self.cases = Cases()
-        self.events = Events(initial_events=events, update_cases=self.cases.update_cases)
+        if not self.is_cases_up_to_date:
+            events = [Event.deserialize(e) for e in response.data]
+            self.cases = Cases()
+            self.events = Events(initial_events=events, update_cases=self.cases.update_cases)
 
-        response = self.filter_events()
-        if not response.ok:
-            return response
+            response = self.filter_events()
+            if not response.ok:
+                return response
+
+            self.is_cases_up_to_date = True
 
         response = self.eventlog_to_json()
 
@@ -308,17 +325,27 @@ class EventService:
 
         self.set_filter(response.data)
 
-        events = [Event.deserialize(e) for e in response.data]
-        self.cases = Cases()
-        self.events = Events(initial_events=events, update_cases=self.cases.update_cases)
+        if not self.is_model_up_to_date:
+            events = [Event.deserialize(e) for e in response.data]
+            self.cases = Cases()
+            self.events = Events(initial_events=events, update_cases=self.cases.update_cases)
 
-        response = self.filter_events()
-        if not response.ok:
+            response = self.filter_events()
+            if not response.ok:
+                return response
+
+            self.is_cases_up_to_date = True
+
+        if not self.is_model_up_to_date:
+            response = self.export_to_xes()
+
+            if response.ok:
+                self.xes_path = response.data
+                self.is_model_up_to_date = True
+
             return response
 
-        response = self.export_to_xes()
-
-        return response
+        return Success(self.xes_path)
 
     def get_image(self, data):
         validate = validate_date_data(data)
@@ -338,25 +365,30 @@ class EventService:
         self.set_filter(response.data)
         print(self.filter_value)
 
-        events = [Event.deserialize(e) for e in response.data]
-        self.cases = Cases()
-        self.events = Events(initial_events=events, update_cases=self.cases.update_cases)
-        print("Created cases")
+        if not self.is_model_up_to_date:
+            events = [Event.deserialize(e) for e in response.data]
+            self.cases = Cases()
+            self.events = Events(initial_events=events, update_cases=self.cases.update_cases)
+            print("Created cases")
 
-        response = self.filter_events()
-        if not response.ok:
-            return response
-        print("Filtered events")
-        print(len(self.events.events))
+            response = self.filter_events()
+            if not response.ok:
+                return response
+            print("Filtered events")
+            print(len(self.events.events))
 
-        response = self.export_to_xes()
-        if not response.ok:
-            return response
+            self.is_cases_up_to_date = True
 
-        xes_path = response.data
-        print(xes_path)
+        if not self.is_model_up_to_date:
+            response = self.export_to_xes()
+            if not response.ok:
+                return response
 
-        response = model_eventlog(xes_path)
+            self.is_model_up_to_date = True
+
+            self.xes_path = response.data
+
+        response = model_eventlog(self.xes_path)
         if not response.ok:
             return response
         print(response.data)
