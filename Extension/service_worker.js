@@ -13,6 +13,11 @@ let prevTabQty = -1;
 let removing = false;
 const weekInMilliseconds = 7*24*60*60*1000; // one week calculated in seconds, maybe some constant for that
 
+const replacements = {
+    'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n', 'ó': 'o', 'ś': 's', 'ź': 'z', 'ż': 'z',
+    'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N', 'Ó': 'O', 'Ś': 'S', 'Ź': 'Z', 'Ż': 'Z'
+};
+
 
 const getCurrentTab = async function() {
 	let currTab = undefined;
@@ -133,10 +138,10 @@ const cleanEventData = function(event) {
 	return event;
 }
 
-const postEventData = function(event) {
+const postEventData = async function(event) {
 	let eventToPost = cleanEventData(event);
 	console.log(eventToPost); // delete
-	fetch('http://localhost:1234/', {
+	await fetch('http://localhost:1234/', {
 		method: "POST",
 		body: JSON.stringify(eventToPost),
 		headers: new Headers({
@@ -155,6 +160,11 @@ const deleteDuplicates = function(events) {
 		[event[key], event])).values()];
 
 	return arrayUniqueByKey;
+}
+
+const replaceSpecialChars = (str) => {
+	return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+								.replace(/[ąćęłńóśźż]/gi, (letter) => replacements[letter]) // Remove accents e.g. polish letters
 }
 
 console.log("Background script is running.");
@@ -198,10 +208,11 @@ chrome.storage.local.get(['events']).then(async function(result) {
 		e.transition = lastVisit.transition;
 		//e.timestamp = lastVisit.visitTime
 		e.leaveTime = new Date().getTime();
+		e.title = replaceSpecialChars(e.title);
 
 		let prevEvent = getEventByUrlAndTabId(e.url, e.tabId, eventsParsed);
 		console.log(prevEvent);
-		postEventData(prevEvent);
+		await postEventData(prevEvent);
 
 		eventsParsed = eventsParsed.filter(function (event) {
 			return event !== prevEvent;
@@ -360,10 +371,10 @@ chrome.tabs.onRemoved.addListener(async function(tabId) {
 				e.duration += e.endTime - e.startTime;
 			}
 		}
-
+		e.title = replaceSpecialChars(e.title);
 		let prevEvent = getEventByUrlAndTabId(e.url, e.tabId, events);
 		console.log(prevEvent);
-		postEventData(prevEvent);
+		await postEventData(prevEvent);
 
 		events = events.filter(function (event) {
 			return event !== prevEvent;
@@ -491,9 +502,9 @@ chrome.tabs.onActivated.addListener(async function(activeInfo) {
 
 			//e.endTime = new Date().getTime();
 			//e.duration += e.endTime - e.startTime;
-
+			e.title = replaceSpecialChars(e.title);
 			let prevEvent = getEventByUrlAndTabId(e.url, e.tabId, events);
-			postEventData(prevEvent);
+			await postEventData(prevEvent);
 
 			// trzeba dopracowac wysylanie na evencie on removed
 			// sprawdzic czy działa doliczanie czasu w activated i removed

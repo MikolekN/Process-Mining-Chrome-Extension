@@ -7,8 +7,8 @@
 html, body {
   margin: 0;
   padding: 0;
-  width: 500px; /* max: 1000px */
-  height: 500px; /* max: 750px */
+  width: 800px; /* max: 1000px */
+  height: 600px; /* max: 750px */
   overflow: hidden;
 }
 #zoom {
