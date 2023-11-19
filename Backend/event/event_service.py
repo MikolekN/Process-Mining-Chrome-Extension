@@ -191,18 +191,18 @@ class EventService:
                 self.is_model_up_to_date = False
                 self.is_cases_up_to_date = False
             elif self.start_date is not None and self.end_date is not None:
-                start_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(self.start_date))
-                end_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(self.end_date))
+                start_date = datetime.strptime(self.start_date, "%Y-%m-%d")
+                end_date = datetime.strptime(self.end_date, "%Y-%m-%d")
                 if start_date < event_date < end_date:
                     self.is_model_up_to_date = False
                     self.is_cases_up_to_date = False
             elif self.start_date is not None:
-                start_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(self.start_date))
+                start_date = datetime.strptime(self.start_date, "%Y-%m-%d")
                 if start_date < event_date:
                     self.is_model_up_to_date = False
                     self.is_cases_up_to_date = False
             elif self.end_date is not None:
-                end_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(self.end_date))
+                end_date = datetime.strptime(self.end_date, "%Y-%m-%d")
                 if event_date < end_date:
                     self.is_model_up_to_date = False
                     self.is_cases_up_to_date = False
@@ -269,7 +269,10 @@ class EventService:
     def export_to_xes(self):
         df = self.read_data_to_export()
         xes_path = os.path.join(os.path.expanduser('~'), "XES.xes")
-        pm4py.write_xes(df, xes_path, activity_key='title', timestamp_key='timestamp', case_id_key='case_id')
+        try:
+            pm4py.write_xes(df, xes_path, activity_key='title', timestamp_key='timestamp', case_id_key='case_id')
+        except Exception as e:
+            return Failure(str(e))
         return Success(xes_path)
 
     def eventlog_to_json(self):
@@ -337,6 +340,9 @@ class EventService:
             self.is_cases_up_to_date = True
 
         if not self.is_model_up_to_date:
+            if len(self.cases.cases) == 0:
+                return Failure("Database is empty")
+
             response = self.export_to_xes()
 
             if response.ok:
@@ -380,6 +386,9 @@ class EventService:
             self.is_cases_up_to_date = True
 
         if not self.is_model_up_to_date:
+            if len(self.cases.cases) == 0:
+                return Failure("Database is empty")
+
             response = self.export_to_xes()
             if not response.ok:
                 return response
