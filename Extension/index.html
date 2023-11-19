@@ -19,25 +19,16 @@
     </header>
 
 	<div>
-		<p>Click here to export Database:</p>
-        <button id="get-database">GET</button>
 		<label for="start">Start date:</label>
 		<!-- value może przyjąć wartość obecnej daty -->
 		<input type="date" id="start" name="interval-start" value="2023-11-01" min="2023-11-01" />
 		<label for="end">End date:</label>
 		<input type="date" id="end" name="interval-end" value="2023-11-01" min="2023-11-01" />
+		<p>Click here to export Database:</p>
+        <button id="get-database">GET</button>
         <p>Click here to export Event Log in XES:</p>
         <button id="get-eventlog-xes">GET</button>
-		<p>Click here to get Event Log</p>
-        <button id="get-eventlog">GET</button>
-		<p>Click here to get iamge</p>
-        <button id="get-image">GET</button>
 	</div>
-
-	<div id="test-img-endpoint">
-
-	</div>
- 
 
 	<div class="wrapper">
 		<h2 id="tabs-title">Process Mining Extension</h2>
@@ -52,16 +43,16 @@
 				<div id="visualisation" aria-labelledby="tab-1">
 					<div id="pm-model" class="zoom-outer tabcontent">
 						<p>Click here to update your visualisation graph:</p>
-						<button id="getVisualisatinImg">Update</button>
+						<button id="get-image">Update</button>
 						<div class="zoom-inner" id="zoom">
-							<img id="pm" src="images/bpmn.png" alt="PM visualization">
+							<!--<img id="pm" src="images/bpmn.png" alt="PM visualization">-->
 						</div>
 					</div>
 				</div>
 				<div id="event-log" aria-labelledby="tab-2">
-					<p>
-						Place for event log 
-					</p>
+					<p>Click here to get Event Log</p>
+        			<button id="get-eventlog">GET</button>
+					<div id="eventlog-data"></div>
 				</div>
 			</div>
 		</div>
