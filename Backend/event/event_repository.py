@@ -6,6 +6,8 @@ import bson
 import config
 from method_return import Success, Failure
 
+import msvcrt
+
 
 class EventRepository:
     def __init__(self, testing=False):
@@ -35,20 +37,26 @@ class EventRepository:
     def post_events(self, data):
         self.create_file_if_not_exists()
 
-        with open(self.db, 'r') as file:
-            events = json.load(file)
-            if not isinstance(events, list):
-                events = [events]
+        lock_file = self.db + ".lock"
+        with open(lock_file, "wb") as lock_fp:
+            msvcrt.locking(lock_fp.fileno(), msvcrt.LK_LOCK, 1)
+            try:
+                with open(self.db, 'r') as file:
+                    events = json.load(file)
+                    if not isinstance(events, list):
+                        events = [events]
 
-        for event in events:
-            if event['eventId'] == data['eventId']:
-                return Failure("An event with given eventId already exists.")
+                for event in events:
+                    if event['eventId'] == data['eventId']:
+                        return Failure("An event with given eventId already exists.")
 
-        data['_id'] = str(bson.ObjectId())
-        events.append(data)
+                data['_id'] = str(bson.ObjectId())
+                events.append(data)
 
-        with open(self.db, 'w') as file:
-            json.dump(events, file)
+                with open(self.db, 'w') as file:
+                    json.dump(events, file)
+            finally:
+                msvcrt.locking(lock_fp.fileno(), msvcrt.LK_UNLCK, 1)
 
         return Success(data)
 
