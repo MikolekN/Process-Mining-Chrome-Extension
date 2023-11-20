@@ -17,7 +17,21 @@ class EventController:
             else:
                 return {}
 
-        # Returns raw json data filtered by provided startDate and endDate
+        @event_blueprint.route('/database', methods=['GET'])
+        def get_database():
+            result = self.service.get_database()
+            if result.ok:
+                database_path = result.data
+                return send_file(path_or_file=database_path,
+                                 mimetype="application/json",
+                                 as_attachment=True,
+                                 download_name='database.json',
+                                 conditional=True,
+                                 etag=True,
+                                 last_modified=None,
+                                 max_age=None)
+            return make_response(jsonify(result.message), 404)
+
         @event_blueprint.route('', methods=['GET'])
         def get_events():
             data = parse_date_data(request)
@@ -47,21 +61,6 @@ class EventController:
         #     if result.ok:
         #         return make_response(jsonify(result.data), 200)
         #     return make_response(jsonify(result.message), 404)
-
-        @event_blueprint.route('/database', methods=['GET'])
-        def get_database():
-            result = self.service.get_database()
-            if result.ok:
-                database_path = result.data
-                return send_file(path_or_file=database_path,
-                                 mimetype="application/json",
-                                 as_attachment=True,
-                                 download_name='database.json',
-                                 conditional=True,
-                                 etag=True,
-                                 last_modified=None,
-                                 max_age=None)
-            return make_response(jsonify(result.message), 404)
 
         @event_blueprint.route('/eventlog', methods=['GET'])
         def get_eventlog():
