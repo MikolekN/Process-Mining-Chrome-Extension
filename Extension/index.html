@@ -6,8 +6,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chrome History Dashboard</title>
-    <link rel="stylesheet" href="./style.css">
-    <link rel="stylesheet" href="./tabs.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/tabs.css">
+	<link rel="stylesheet" href="./css/bootstrap.min.css">
+	<link rel="stylesheet" href="./css/table.css">
 </head>
 
 <body>
@@ -21,25 +23,101 @@
 	<div>
 		<label for="start">Start date:</label>
 		<!-- value może przyjąć wartość obecnej daty -->
-		<input type="date" id="start" name="interval-start" value="2023-11-01" min="2023-11-01" />
+		<input type="date" id="start-date" name="interval-start" value="2023-11-01" min="2023-11-01" />
 		<label for="end">End date:</label>
-		<input type="date" id="end" name="interval-end" value="2023-11-01" min="2023-11-01" />
-		<p>Click here to export Database:</p>
+		<input type="date" id="end-date" name="interval-end" value="2023-11-01" min="2023-11-01" />
+		<!--<p>Click here to export Database:</p>
         <button id="get-database">GET</button>
         <p>Click here to export Event Log in XES:</p>
-        <button id="get-eventlog-xes">GET</button>
+        <button id="get-eventlog-xes">GET</button>-->
 	</div>
+
+<!--	<div class="table-responsive">
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">Heading</th>
+					<th scope="col">Heading</th>
+					<th scope="col">Heading</th>
+					<th scope="col">#</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr class="accordion-toggle collapsed" id="accordion1" data-bs-toggle="collapse" 
+				data-bs-parent="#accordion1" href="#collapse1" aria-controls="collapse1">
+					<td>Cell</td>
+					<td>Cell</td>
+					<td>Cell</td>
+					<td class="expand-button"></td>
+				</tr>
+				<tr class="hide-table-padding">
+					<td></td>
+					<td colspan="3">
+						<div id="collapse1" class="collapse in p-3">
+							<div class="row">
+								<div class="col-2">label</div>
+								<div class="col-6">value 1</div>
+							</div>
+							<div class="row">
+								<div class="col-2">label</div>
+								<div class="col-6">value 2</div>
+							</div>
+							<div class="row">
+								<div class="col-2">label</div>
+								<div class="col-6">value 3</div>
+							</div>
+							<div class="row">
+								<div class="col-2">label</div>
+								<div class="col-6">value 4</div>
+							</div>
+						</div>
+					</td>
+				</tr>
+				<tr class="accordion-toggle collapsed" id="accordion2" data-bs-toggle="collapse" 
+				data-bs-parent="#accordion2" href="#collapse2" aria-controls="collapse2">
+					<td>Cell</td>
+					<td>Cell</td>
+					<td>Cell</td>
+					<td class="expand-button"></td>
+				</tr>
+				<tr class="hide-table-padding">
+					<td></td>
+					<td colspan="3">
+						<div id="collapse2" class="collapse in p-3">
+							<div class="row">
+								<div class="col-2">label</div>
+								<div class="col-6">value 1</div>
+							</div>
+							<div class="row">
+								<div class="col-2">label</div>
+								<div class="col-6">value 2</div>
+							</div>
+							<div class="row">
+								<div class="col-2">label</div>
+								<div class="col-6">value 3</div>
+							</div>
+							<div class="row">
+								<div class="col-2">label</div>
+								<div class="col-6">value 4</div>
+							</div>
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>-->
 
 	<div class="wrapper">
 		<h2 id="tabs-title">Process Mining Extension</h2>
-
-		<div class="tabs-container">
-			<ul aria-labelledby="tabs-title">
-				<li><a id="tab-1" href="#visualisation"> Visualisation </a></li>
-				<li><a id="tab-2" href="#event-log"> Event Log </a></li>
-			</ul>
-
-			<div class="tabs__panels flow">
+		<nav>
+			<div class="nav nav-tabs" id="nav-tab" role="tablist">
+				<button class="nav-link active" id="nav-visualisation-tab" data-bs-toggle="tab" data-bs-target="#nav-visualisation" type="button" role="tab" aria-controls="nav-visualisation" aria-selected="true">Visualisation</button>
+				<button class="nav-link" id="nav-event-log-tab" data-bs-toggle="tab" data-bs-target="#nav-event-log" type="button" role="tab" aria-controls="nav-event-log" aria-selected="false">Event Log</button>
+				<button class="nav-link" id="nav-reports-tab" data-bs-toggle="tab" data-bs-target="#nav-reports" type="button" role="tab" aria-controls="nav-reports" aria-selected="false">Download Reports</button>
+			</div>
+		</nav>
+		<div class="tab-content" id="nav-tabContent">
+			<div class="tab-pane fade show active" id="nav-visualisation" role="tabpanel" aria-labelledby="nav-visualisation-tab">
 				<div id="visualisation" aria-labelledby="tab-1">
 					<div id="pm-model" class="zoom-outer tabcontent">
 						<p>Click here to update your visualisation graph:</p>
@@ -49,14 +127,24 @@
 						</div>
 					</div>
 				</div>
+			</div>
+			<div class="tab-pane fade" id="nav-event-log" role="tabpanel" aria-labelledby="nav-event-log-tab">
 				<div id="event-log" aria-labelledby="tab-2">
 					<p>Click here to get Event Log</p>
         			<button id="get-eventlog">GET</button>
 					<div id="eventlog-data"></div>
 				</div>
 			</div>
+			<div class="tab-pane fade" id="nav-reports" role="tabpanel" aria-labelledby="nav-reports-tab">
+				<p>Click here to export Database:</p>
+				<button id="get-database">GET</button>
+				<p>Click here to export Event Log in XES:</p>
+				<button id="get-eventlog-xes">GET</button>
+			</div>
 		</div>
 	</div>
 
+	
+	<script src="js/bootstrap.min.js"></script>
 </body>
 </html>
