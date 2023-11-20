@@ -254,7 +254,8 @@ class EventService:
                         self.cases.append([event])
 
         self.cases = [[event for event in chain if event['duration'] > self.filter_value] for chain in self.cases]
-
+        self.cases = [chain for chain in self.cases if len(chain) != 0]
+        
         return Success(self.cases)
 
     def get_xes(self, data):
