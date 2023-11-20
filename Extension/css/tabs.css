@@ -13,11 +13,7 @@
   }
   
   /* extra styling to make the tabs look better that wasn't in the video */
-  .tabs-container {
-    padding: 2.5rem;
-    border-radius: 0.5rem;
-    background: hsl(0 0% 50% / 0.1);
-  }
+  
   
   :root {
     /* either --dark-mode or --no-dark-mode */
