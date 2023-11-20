@@ -41,14 +41,11 @@ def validate_date_data(data):
 
 def model_eventlog(xes_path):
     xes = pm4py.read_xes(xes_path)
-    print("Loaded xes")
     dfg, start_activities, end_activities = pm4py.discovery.discover_dfg(xes, activity_key='title',
                                                                          timestamp_key='timestamp',
                                                                          case_id_key='case_id')
-    print("Created dfg")
     image_path = os.path.join(os.path.expanduser('~'), "image.png")
     pm4py.save_vis_dfg(dfg, start_activities, end_activities, image_path)
-    print("Created image")
     return Success(image_path)
 
 
@@ -59,14 +56,20 @@ class EventService:
 
         self.start_date = None
         self.end_date = None
+
         self.is_model_up_to_date = False
-        # value at which the events will be filtered out (in milliseconds)
+        self.is_cases_up_to_date = False
+
         self.filter_value = 0
 
-        self.cases = Cases()
-        self.events = Events(update_cases=self.cases.update_cases)
+        self.cases = []
 
-    # Returns events as a raw json data.
+        self.xes_path = None
+
+    def get_database(self):
+        response = self.repository.get_database()
+        return response
+
     def get_events(self, data):
         validate = validate_date_data(data)
         if not validate.ok:
@@ -92,56 +95,61 @@ class EventService:
                 filtered_json.append(e)
         return Success(filtered_json)
 
-    # # A helper function that gathers events into the events list and creates the cases list
-    # def load_events(self):
-    #     response = self.repository.get_events()
-    #
-    #     if response.ok:
-    #         events = [Event.deserialize(e) for e in response.data]
-    #         self.cases = Cases()
-    #         self.events = Events(initial_events=events, update_cases=self.cases.update_cases)
-    #
-    #         self.filter_events()
-    #
-    #     return response
-
-    def filter_events(self):
-        filtered_cases = []
-        for case in self.cases.cases:
-            filtered_case = []
-            for event in case.events:
-                if event.duration > self.filter_value:
-                    filtered_case.append(event)
-            if len(filtered_case) > 0:
-                filtered_cases.append(Case(filtered_case))
-        self.cases.cases = filtered_cases
-        return Success(filtered_cases)
-
-    def set_date(self, date_data):
-        self.start_date = date_data['startDate']
-        self.end_date = date_data['endDate']
-        return Success("Setting date successful")
-
     def set_filter(self, events):
-        new_start_date = self.start_date
-        if new_start_date is None:
-            new_start_date = datetime.fromtimestamp(events[0]['timestamp'] / 1000000)
+        if len(events) == 0:
+            if self.filter_value != 0:
+                self.filter_value = 0
+                self.is_model_up_to_date = False
+                self.is_cases_up_to_date = False
         else:
-            new_start_date = datetime.strptime(new_start_date, "%Y-%m-%d")
+            if self.start_date is None:
+                new_start_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(events[0]['timestamp']))
+            else:
+                new_start_date = datetime.strptime(self.start_date, "%Y-%m-%d")
 
-        new_end_date = self.end_date
-        if new_end_date is None:
-            new_end_date = datetime.fromtimestamp(events[-1]['timestamp'] / 1000000)
-        else:
-            new_end_date = datetime.strptime(new_end_date, "%Y-%m-%d")
+            if self.end_date is None:
+                new_end_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(events[-1]['timestamp']))
+            else:
+                new_end_date = datetime.strptime(self.end_date, "%Y-%m-%d")
 
-        time_difference = new_end_date - new_start_date
-        if time_difference.days < 1:
-            self.filter_value = 0
-        else:
-            self.filter_value = 60000
+            time_difference = new_end_date - new_start_date
+            if time_difference.days < 1:
+                if self.filter_value != 0:
+                    self.filter_value = 0
+                    self.is_model_up_to_date = False
+                    self.is_cases_up_to_date = False
+            else:
+                if self.filter_value != 60000:
+                    self.filter_value = 60000
+                    self.is_model_up_to_date = False
+                    self.is_cases_up_to_date = False
 
         return Success("Setting filter successful")
+
+    def set_date(self, date_data):
+        if date_data['startDate'] is not None:
+            new_start_date = datetime.strptime(date_data['startDate'], "%Y-%m-%d")
+            if self.start_date is None or new_start_date != datetime.strptime(self.start_date, "%Y-%m-%d"):
+                self.start_date = date_data['startDate']
+                self.is_model_up_to_date = False
+                self.is_cases_up_to_date = False
+        elif self.start_date is not None:
+            self.start_date = None
+            self.is_model_up_to_date = False
+            self.is_cases_up_to_date = False
+
+        if date_data['endDate'] is not None:
+            new_end_date = datetime.strptime(date_data['endDate'], "%Y-%m-%d")
+            if self.end_date is None or new_end_date != datetime.strptime(self.end_date, "%Y-%m-%d"):
+                self.end_date = date_data['endDate']
+                self.is_model_up_to_date = False
+                self.is_cases_up_to_date = False
+        elif self.end_date is not None:
+            self.end_date = None
+            self.is_model_up_to_date = False
+            self.is_cases_up_to_date = False
+
+        return Success("Setting date successful")
 
     def post_events(self, data):
         validate = validate_data(data)
@@ -151,31 +159,145 @@ class EventService:
 
         post = self.repository.post_events(validated_data)
 
-        # if post.ok and (self.end_date is None or datetime.fromtimestamp(post.data['timestamp']) <= self.end_date):
-        #     self.is_model_up_to_date = False
+        if post.ok:
+            event_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(post.data['timestamp']))
+            if self.start_date is None and self.end_date is None:
+                self.is_model_up_to_date = False
+                self.is_cases_up_to_date = False
+            elif self.start_date is not None and self.end_date is not None:
+                start_date = datetime.strptime(self.start_date, "%Y-%m-%d")
+                end_date = datetime.strptime(self.end_date, "%Y-%m-%d")
+                if start_date < event_date < end_date:
+                    self.is_model_up_to_date = False
+                    self.is_cases_up_to_date = False
+            elif self.start_date is not None:
+                start_date = datetime.strptime(self.start_date, "%Y-%m-%d")
+                if start_date < event_date:
+                    self.is_model_up_to_date = False
+                    self.is_cases_up_to_date = False
+            elif self.end_date is not None:
+                end_date = datetime.strptime(self.end_date, "%Y-%m-%d")
+                if event_date < end_date:
+                    self.is_model_up_to_date = False
+                    self.is_cases_up_to_date = False
 
         return post
 
-    def get_event_by_id(self, _id):
-        if len(self.events.events) != 0:
-            for event in self.events.events:
-                if event._id == _id:
-                    return Success(json.loads(json.dumps(event, default=vars)))
+    # def get_event_by_id(self, _id):
+    #     if len(self.events.events) != 0:
+    #         for event in self.events.events:
+    #             if event._id == _id:
+    #                 return Success(json.loads(json.dumps(event, default=vars)))
+    #
+    #     response = self.repository.get_event_by_id(_id)
+    #     return response
+    #
+    # def get_event_by_event_id(self, eventId):
+    #     if len(self.events.events) != 0:
+    #         for event in self.events.events:
+    #             if event.eventId == eventId:
+    #                 return Success(json.loads(json.dumps(event, default=vars)))
+    #     response = self.repository.get_event_by_event_id(eventId)
+    #     return response
 
-        response = self.repository.get_event_by_id(_id)
-        return response
+    def get_eventlog(self, data):
+        validate = validate_date_data(data)
+        if not validate.ok:
+            return validate
+        validated_date_data = validate.data
 
-    def get_event_by_event_id(self, eventId):
-        if len(self.events.events) != 0:
-            for event in self.events.events:
-                if event.eventId == eventId:
-                    return Success(json.loads(json.dumps(event, default=vars)))
-        response = self.repository.get_event_by_event_id(eventId)
-        return response
+        self.set_date(validated_date_data)
 
-    def get_database(self):
-        response = self.repository.get_database()
-        return response
+        response = self.repository.get_events()
+        if not response.ok:
+            return response
+
+        self.set_filter(response.data)
+
+        if not self.is_cases_up_to_date:
+            response = self.chain_events(response.data)
+            if response.ok:
+                self.is_cases_up_to_date = True
+            return response
+
+        return Success(self.cases)
+
+    def chain_events(self, events):
+        event_map = {event['eventId']: event for event in events}
+        self.cases = []
+
+        for event in events:
+            if event['fromVisit'] == 0 or event['fromVisit'] == '0':
+                self.cases.append([event])
+
+        for event in events:
+            if event['fromVisit'] != 0:
+                from_event = event_map.get(event['fromVisit'])
+                if from_event:
+                    added_to_chain = False
+                    for chain in self.cases:
+                        if len(chain) > 0:
+                            if event['fromVisit'] == chain[-1]['eventId']:
+                                added_to_chain = True
+                                chain.append(event)
+                                break
+                            for index, e in enumerate(chain):
+                                if e['eventId'] == event['fromVisit']:
+                                    added_to_chain = True
+                                    events = chain[:index + 1]
+                                    events.append(event)
+                                    self.cases.append(events)
+                                    break
+                            if added_to_chain:
+                                break
+                    if not added_to_chain:
+                        self.cases.append([event])
+
+        self.cases = [[event for event in chain if event['duration'] > self.filter_value] for chain in self.cases]
+
+        return Success(self.cases)
+
+    def get_xes(self, data):
+        validate = validate_date_data(data)
+        if not validate.ok:
+            return validate
+        validated_date_data = validate.data
+
+        self.set_date(validated_date_data)
+
+        response = self.repository.get_events()
+        if not response.ok:
+            return response
+
+        self.set_filter(response.data)
+
+        if not self.is_cases_up_to_date:
+            response = self.chain_events(response.data)
+            if not response.ok:
+                return response
+            self.is_cases_up_to_date = True
+
+        if not self.is_model_up_to_date:
+            if len(self.cases) == 0:
+                return Failure("Database is empty")
+
+            response = self.export_to_xes()
+            if response.ok:
+                self.xes_path = response.data
+                self.is_model_up_to_date = True
+
+            return response
+
+        return Success(self.xes_path)
+
+    def export_to_xes(self):
+        df = self.read_data_to_export()
+        xes_path = os.path.join(os.path.expanduser('~'), "XES.xes")
+        try:
+            pm4py.write_xes(df, xes_path, activity_key='title', timestamp_key='timestamp', case_id_key='case_id')
+        except Exception as e:
+            return Failure(str(e))
+        return Success(xes_path)
 
     def read_data_to_export(self):
         case_ids = []
@@ -187,16 +309,16 @@ class EventService:
         titles = []
         urls = []
 
-        for case_index, case in enumerate(self.cases.cases):
-            for event in case.events:
+        for case_index, case in enumerate(self.cases):
+            for event in case:
                 case_ids.append(str(case_index))
-                event_ids.append(event.eventId)
-                from_ids.append(event.fromVisit)
-                timestamps.append(datetime(1970, 1, 1) + timedelta(milliseconds=event.timestamp))
-                transitions.append(event.transition)
-                durations.append(event.duration)
-                titles.append(event.title)
-                urls.append(event.url)
+                event_ids.append(str(event['eventId']))
+                from_ids.append(str(event['fromVisit']))
+                timestamps.append(datetime(1970, 1, 1) + timedelta(milliseconds=int(event['timestamp'])))
+                transitions.append(str(event['transition']))
+                durations.append(str(event['duration']))
+                titles.append(str(event['title']))
+                urls.append(str(event['url']))
 
         data = {
             "case_id": case_ids,
@@ -213,113 +335,35 @@ class EventService:
 
         return df
 
-    def export_to_xes(self):
-        df = self.read_data_to_export()
-        xes_path = os.path.join(os.path.expanduser('~'), "XES.xes")
-        pm4py.write_xes(df, xes_path, activity_key='title', timestamp_key='timestamp', case_id_key='case_id')
-        return Success(xes_path)
-
-    def eventlog_to_json(self):
-        eventlog = {}
-        for case_index, case in enumerate(self.cases.cases):
-            events = []
-            for event in case.events:
-                e = event.serialize()
-                events.append(e)
-            eventlog[str(case_index)] = events
-        return Success(eventlog)
-
-    def get_eventlog(self, data):
-        validate = validate_date_data(data)
-        if not validate.ok:
-            return validate
-        validated_date_data = validate.data
-
-        self.set_date(validated_date_data)
-
-        response = self.repository.get_events()
-        if not response.ok:
-            return response
-
-        self.set_filter(response.data)
-
-        events = [Event.deserialize(e) for e in response.data]
-        self.cases = Cases()
-        self.events = Events(initial_events=events, update_cases=self.cases.update_cases)
-
-        response = self.filter_events()
-        if not response.ok:
-            return response
-
-        response = self.eventlog_to_json()
-
-        return response
-
-    def get_xes(self, data):
-        validate = validate_date_data(data)
-        if not validate.ok:
-            return validate
-        validated_date_data = validate.data
-
-        self.set_date(validated_date_data)
-
-        response = self.repository.get_events()
-        if not response.ok:
-            return response
-
-        self.set_filter(response.data)
-
-        events = [Event.deserialize(e) for e in response.data]
-        self.cases = Cases()
-        self.events = Events(initial_events=events, update_cases=self.cases.update_cases)
-
-        response = self.filter_events()
-        if not response.ok:
-            return response
-
-        response = self.export_to_xes()
-
-        return response
-
     def get_image(self, data):
         validate = validate_date_data(data)
         if not validate.ok:
             return validate
         validated_date_data = validate.data
-        print(validated_date_data)
 
         self.set_date(validated_date_data)
-        print(self.start_date)
-        print(self.end_date)
 
         response = self.repository.get_events()
         if not response.ok:
             return response
 
         self.set_filter(response.data)
-        print(self.filter_value)
 
-        events = [Event.deserialize(e) for e in response.data]
-        self.cases = Cases()
-        self.events = Events(initial_events=events, update_cases=self.cases.update_cases)
-        print("Created cases")
+        if not self.is_cases_up_to_date:
+            response = self.chain_events(response.data)
+            if not response.ok:
+                return response
+            self.is_cases_up_to_date = True
 
-        response = self.filter_events()
-        if not response.ok:
-            return response
-        print("Filtered events")
-        print(len(self.events.events))
+        if not self.is_model_up_to_date:
+            if len(self.cases) == 0:
+                return Failure("Database is empty")
 
-        response = self.export_to_xes()
-        if not response.ok:
-            return response
+            response = self.export_to_xes()
+            if not response.ok:
+                return response
+            self.xes_path = response.data
+            self.is_model_up_to_date = True
 
-        xes_path = response.data
-        print(xes_path)
-
-        response = model_eventlog(xes_path)
-        if not response.ok:
-            return response
-        print(response.data)
-
+        response = model_eventlog(self.xes_path)
         return response
