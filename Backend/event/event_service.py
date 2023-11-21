@@ -252,10 +252,12 @@ class EventService:
                                 break
                     if not added_to_chain:
                         self.cases.append([event])
+                else:
+                    self.cases.append([event])
 
         self.cases = [[event for event in chain if event['duration'] > self.filter_value] for chain in self.cases]
         self.cases = [chain for chain in self.cases if len(chain) != 0]
-        
+
         return Success(self.cases)
 
     def get_xes(self, data):
