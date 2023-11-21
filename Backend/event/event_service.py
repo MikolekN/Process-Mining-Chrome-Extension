@@ -231,7 +231,7 @@ class EventService:
                 self.cases.append([event])
 
         for event in events:
-            if event['fromVisit'] != 0:
+            if event['fromVisit'] != 0 and event['fromVisit'] != '0':
                 from_event = event_map.get(event['fromVisit'])
                 if from_event:
                     added_to_chain = False
