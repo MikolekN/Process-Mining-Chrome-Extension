@@ -24,7 +24,7 @@ tr.hide-table-padding td {
 }
 
 .tab-content {
-    padding: 2.5rem;
+    padding: 0.5rem;
     border-radius: 0.5rem;
     background: hsl(0 0% 50% / 0.1);
 }

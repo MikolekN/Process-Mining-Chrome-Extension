@@ -14,18 +14,13 @@
 
 <body>
     <header>
-        <h1>Process Mining Extension</h1>
 		<script src="./scripts.js"></script>
         <script src="./zoom.js"></script>
         <script src="./tabs.js"></script>
     </header>
 
 	<div>
-		<label for="start">Start date:</label>
-		<!-- value może przyjąć wartość obecnej daty -->
-		<input type="date" id="start-date" name="interval-start" value="2023-11-01" min="2023-11-01" />
-		<label for="end">End date:</label>
-		<input type="date" id="end-date" name="interval-end" value="2023-11-01" min="2023-11-01" />
+		
 		<!--<p>Click here to export Database:</p>
         <button id="get-database">GET</button>
         <p>Click here to export Event Log in XES:</p>
@@ -109,6 +104,11 @@
 
 	<div class="wrapper">
 		<h2 id="tabs-title">Process Mining Extension</h2>
+		<label for="start">Start date:</label>
+		<!-- value może przyjąć wartość obecnej daty -->
+		<input type="date" id="start-date" name="interval-start" value="2023-11-01" min="2023-11-01" />
+		<label for="end">End date:</label>
+		<input type="date" id="end-date" name="interval-end" value="2023-11-01" min="2023-11-01" />
 		<nav>
 			<div class="nav nav-tabs" id="nav-tab" role="tablist">
 				<button class="nav-link active" id="nav-visualisation-tab" data-bs-toggle="tab" data-bs-target="#nav-visualisation" type="button" role="tab" aria-controls="nav-visualisation" aria-selected="true">Visualisation</button>
@@ -119,9 +119,13 @@
 		<div class="tab-content" id="nav-tabContent">
 			<div class="tab-pane fade show active" id="nav-visualisation" role="tabpanel" aria-labelledby="nav-visualisation-tab">
 				<div id="visualisation" aria-labelledby="tab-1">
+					<p>Click here to update your visualisation graph:</p>
+					<button id="update-image">Update</button>
+					<button id="download-image">Download</button>
+					<div id="error" class="error">
+						<p>Error</p>
+					</div>
 					<div id="pm-model" class="zoom-outer tabcontent">
-						<p>Click here to update your visualisation graph:</p>
-						<button id="get-image">Update</button>
 						<div class="zoom-inner" id="zoom">
 							<!--<img id="pm" src="images/bpmn.png" alt="PM visualization">-->
 						</div>
