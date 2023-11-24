@@ -1,12 +1,9 @@
 import os
 from datetime import datetime, timedelta
-import json
 import pandas as pd
 import pm4py
 
-from case.cases import Cases, Case
 from event.event_repository import EventRepository
-from event.events import Events, Event
 from method_return import Success, Failure
 
 
@@ -183,22 +180,11 @@ class EventService:
 
         return post
 
-    # def get_event_by_id(self, _id):
-    #     if len(self.events.events) != 0:
-    #         for event in self.events.events:
-    #             if event._id == _id:
-    #                 return Success(json.loads(json.dumps(event, default=vars)))
-    #
-    #     response = self.repository.get_event_by_id(_id)
-    #     return response
-    #
-    # def get_event_by_event_id(self, eventId):
-    #     if len(self.events.events) != 0:
-    #         for event in self.events.events:
-    #             if event.eventId == eventId:
-    #                 return Success(json.loads(json.dumps(event, default=vars)))
-    #     response = self.repository.get_event_by_event_id(eventId)
-    #     return response
+    def get_event_by_id(self, _id):
+        return self.repository.get_event_by_id(_id)
+
+    def get_event_by_event_id(self, eventId):
+        return self.repository.get_event_by_event_id(eventId)
 
     def get_eventlog(self, data):
         validate = validate_date_data(data)
@@ -231,7 +217,7 @@ class EventService:
                 self.cases.append([event])
 
         for event in events:
-            if event['fromVisit'] != 0:
+            if event['fromVisit'] != 0 and event['fromVisit'] != '0':
                 from_event = event_map.get(event['fromVisit'])
                 if from_event:
                     added_to_chain = False
@@ -252,10 +238,12 @@ class EventService:
                                 break
                     if not added_to_chain:
                         self.cases.append([event])
+                else:
+                    self.cases.append([event])
 
         self.cases = [[event for event in chain if event['duration'] > self.filter_value] for chain in self.cases]
         self.cases = [chain for chain in self.cases if len(chain) != 0]
-        
+
         return Success(self.cases)
 
     def get_xes(self, data):

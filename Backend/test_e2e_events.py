@@ -23,7 +23,7 @@ class EventControllerTestCase(TestCase):
         self.event = {
             '_id': '64df4cf73595073f910c378d',
             'eventId': 1,
-            'timestamp': '2023-07-18',
+            'timestamp': 1,
             'fromVisit': 0,
             'title': 'Test Event',
             'url': 'http://example.com',
@@ -34,6 +34,11 @@ class EventControllerTestCase(TestCase):
 
     def tearDown(self):
         os.remove(self.db)
+
+    def test_get_database(self):
+        response = self.client.get('/database')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json, [])
 
     def test_get_events_empty(self):
         response = self.client.get('/')
@@ -49,10 +54,16 @@ class EventControllerTestCase(TestCase):
 
     def test_post_events(self):
         response = self.client.post('/', data=json.dumps(self.event), content_type='application/json')
+        self.assertEqual(response.status_code, 200)
         received_event = response.json
         expected_event = deepcopy(self.event)
         expected_event['_id'] = received_event['_id']
         self.assertEqual(received_event, expected_event)
+
+    def test_post_events_event_already_exists(self):
+        self.client.post('/', data=json.dumps(self.event), content_type='application/json')
+        response = self.client.post('/', data=json.dumps(self.event), content_type='application/json')
+        self.assertEqual(response.status_code, 500)
 
     def test_get_event_by_id_empty(self):
         response = self.client.get('/event/64df4cf73595073f910c378d')
@@ -77,3 +88,39 @@ class EventControllerTestCase(TestCase):
         response = self.client.get('/eventId/1')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, self.event)
+
+    def test_get_eventlog_empty(self):
+        response = self.client.get('/eventlog')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('application/json', response.headers['Content-Type'])
+        self.assertEqual(response.json, [])
+
+    def test_get_eventlog_full(self):
+        with open(self.db, 'w') as file:
+            json.dump(self.event, file)
+        response = self.client.get('/eventlog')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('application/json', response.headers['Content-Type'])
+        self.assertEqual(response.json, [[self.event]])
+
+    def test_get_xes_empty(self):
+        response = self.client.get('/xes')
+        self.assertEqual(response.status_code, 500)
+
+    def test_get_xes_full(self):
+        with open(self.db, 'w') as file:
+            json.dump(self.event, file)
+        response = self.client.get('/xes')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('application/xml', response.headers['Content-Type'])
+
+    def test_get_image_empty(self):
+        response = self.client.get('/image')
+        self.assertEqual(response.status_code, 500)
+
+    def test_get_image_full(self):
+        with open(self.db, 'w') as file:
+            json.dump(self.event, file)
+        response = self.client.get('/image')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('image/png', response.headers['Content-Type'])
