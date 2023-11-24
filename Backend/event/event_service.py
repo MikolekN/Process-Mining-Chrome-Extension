@@ -147,9 +147,11 @@ class EventService:
             - Failure: If an error occurs during filtering.
         """
         filtered_json = []
-        for e in json_data:
-            if e['duration'] > self.filter_value:
-                filtered_json.append(e)
+        for event in json_data:
+            if self.start_date is None or datetime.strptime(self.start_date, "%Y-%m-%d") <= datetime(1970, 1, 1) + timedelta(milliseconds=int(event['timestamp'])):
+                if self.end_date is None or datetime(1970, 1, 1) + timedelta(milliseconds=int(event['timestamp'])) <= datetime.strptime(self.end_date, "%Y-%m-%d"):
+                    if event['duration'] > self.filter_value:
+                        filtered_json.append(event)
         return Success(filtered_json)
 
     def set_filter(self, events):
@@ -191,7 +193,6 @@ class EventService:
                     self.filter_value = target_filter_value
                     self.is_model_up_to_date = False
                     self.is_cases_up_to_date = False
-                print(self.filter_value)
 
         return Success("Setting filter successful")
 
@@ -306,10 +307,27 @@ class EventService:
 
         if not self.is_cases_up_to_date:
             response = self.chain_events(response.data)
-            if response.ok:
-                self.is_cases_up_to_date = True
-            return response
+            if not response.ok:
+                return response
+            response = self.filter_cases()
+            if not response.ok:
+                return response
+            self.is_cases_up_to_date = True
 
+        return Success(self.cases)
+
+    def filter_cases(self):
+        self.cases = [[event for event in chain if event['duration'] > self.filter_value] for chain in self.cases]
+        self.cases = [chain for chain in self.cases if len(chain) != 0]
+
+        self.cases = \
+            [
+                [
+                    event for event in case
+                    if (self.start_date is None or datetime.strptime(self.start_date, "%Y-%m-%d") <= datetime(1970, 1, 1) + timedelta(milliseconds=int(event['timestamp'])))
+                       and (self.end_date is None or datetime(1970, 1, 1) + timedelta(milliseconds=int(event['timestamp'])) <= datetime.strptime(self.end_date, "%Y-%m-%d"))
+                ] for case in self.cases
+            ]
         return Success(self.cases)
 
     def chain_events(self, events):
@@ -355,9 +373,6 @@ class EventService:
                 else:
                     self.cases.append([event])
 
-        self.cases = [[event for event in chain if event['duration'] > self.filter_value] for chain in self.cases]
-        self.cases = [chain for chain in self.cases if len(chain) != 0]
-
         return Success(self.cases)
 
     def get_xes(self, data):
@@ -386,6 +401,9 @@ class EventService:
 
         if not self.is_cases_up_to_date:
             response = self.chain_events(response.data)
+            if not response.ok:
+                return response
+            response = self.filter_cases()
             if not response.ok:
                 return response
             self.is_cases_up_to_date = True
@@ -487,6 +505,9 @@ class EventService:
 
         if not self.is_cases_up_to_date:
             response = self.chain_events(response.data)
+            if not response.ok:
+                return response
+            response = self.filter_cases()
             if not response.ok:
                 return response
             self.is_cases_up_to_date = True
