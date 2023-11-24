@@ -48,19 +48,19 @@ class EventController:
                 return make_response(jsonify(result.data), 200)
             return make_response(jsonify(result.message), 500)
 
-        # @event_blueprint.route('/event/<string:_id>', methods=['GET'])
-        # def get_event_by_id(_id):
-        #     result = self.service.get_event_by_id(_id)
-        #     if result.ok:
-        #         return make_response(jsonify(result.data), 200)
-        #     return make_response(jsonify(result.message), 404)
-        #
-        # @event_blueprint.route('/eventId/<int:eventId>', methods=['GET'])
-        # def get_event_by_event_id(eventId):
-        #     result = self.service.get_event_by_event_id(eventId)
-        #     if result.ok:
-        #         return make_response(jsonify(result.data), 200)
-        #     return make_response(jsonify(result.message), 404)
+        @event_blueprint.route('/event/<string:_id>', methods=['GET'])
+        def get_event_by_id(_id):
+            result = self.service.get_event_by_id(_id)
+            if result.ok:
+                return make_response(jsonify(result.data), 200)
+            return make_response(jsonify(result.message), 404)
+
+        @event_blueprint.route('/eventId/<int:eventId>', methods=['GET'])
+        def get_event_by_event_id(eventId):
+            result = self.service.get_event_by_event_id(eventId)
+            if result.ok:
+                return make_response(jsonify(result.data), 200)
+            return make_response(jsonify(result.message), 404)
 
         @event_blueprint.route('/eventlog', methods=['GET'])
         def get_eventlog():

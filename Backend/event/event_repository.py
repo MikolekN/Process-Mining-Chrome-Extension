@@ -16,6 +16,9 @@ class EventRepository:
         self.db = os.path.join(home_directory, db_name + ".json")
         self.create_file_if_not_exists()
 
+    def get_database(self):
+        return Success(self.db)
+
     def get_events(self):
         try:
             with open(self.db, 'r') as file:
@@ -85,6 +88,3 @@ class EventRepository:
             if event['eventId'] == eventId:
                 return Success(event)
         return Failure("No event with given eventId was found.")
-
-    def get_database(self):
-        return Success(self.db)

@@ -18,7 +18,7 @@ class TestEventRepository(unittest.TestCase):
         self.event = {
             '_id': '1',
             'eventId': 1,
-            'timestamp': '2023-07-18',
+            'timestamp': 1,
             'fromVisit': 0,
             'title': 'Test Event',
             'url': 'http://example.com',
@@ -29,6 +29,11 @@ class TestEventRepository(unittest.TestCase):
 
     def tearDown(self):
         os.remove(self.db)
+
+    def test_get_database(self):
+        response = self.repository.get_database()
+        self.assertTrue(response.ok)
+        self.assertEqual(response.data, self.db)
 
     def test_get_events_empty(self):
         response = self.repository.get_events()
@@ -44,9 +49,14 @@ class TestEventRepository(unittest.TestCase):
         self.assertEqual(len(events), 1)
         self.assertEqual(events[0], self.event)
 
+    def test_post_events_event_already_exists(self):
+        self.repository.post_events(self.event)
+        response = self.repository.post_events(self.event)
+        self.assertFalse(response.ok)
+
     def test_post_events(self):
         response = self.repository.post_events(self.event)
-        self.assertEqual(response.ok, True)
+        self.assertTrue(response.ok)
         expected_event = deepcopy(self.event)
         expected_event['_id'] = response.data['_id']
         self.assertEqual(response.data, self.event)

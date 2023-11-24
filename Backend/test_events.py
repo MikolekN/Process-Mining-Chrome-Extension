@@ -5,9 +5,10 @@ from event.events import Event, Events
 
 class TestEvent(unittest.TestCase):
     def test_event_creation(self):
-        event = Event(eventId=1, timestamp=1015859466, fromVisit=0, title="Visit 1", url="https://example.com", transition="link", duration=10)
+        event = Event(_id=1, eventId=1, timestamp=1, fromVisit=0, title="Visit 1", url="https://example.com", transition="link", duration=10)
+        self.assertEqual(event._id, 1)
         self.assertEqual(event.eventId, 1)
-        self.assertEqual(event.timestamp, 1015859466)
+        self.assertEqual(event.timestamp, 1)
         self.assertEqual(event.fromVisit, 0)
         self.assertEqual(event.title, "Visit 1")
         self.assertEqual(event.url, "https://example.com")
@@ -18,9 +19,9 @@ class TestEvent(unittest.TestCase):
 class TestEvents(unittest.TestCase):
     @classmethod
     def setUp(cls):
-        cls.event1 = Event(1, 1364207461, 0, "Visit 1", "https://example.com", "link", 10)
-        cls.event2 = Event(2, 1020186737, 1, "Visit 2", "https://example.com/page", "link", 5)
-        cls.event3 = Event(3, 1221717683, 2, "Visit 3", "https://example.com/page/page", "link", 0)
+        cls.event1 = Event(1, 1, 1364207461, 0, "Visit 1", "https://example.com", "link", 10)
+        cls.event2 = Event(2, 2, 1020186737, 1, "Visit 2", "https://example.com/page", "link", 5)
+        cls.event3 = Event(3, 3, 1221717683, 2, "Visit 3", "https://example.com/page/page", "link", 0)
 
     def test_empty_events(self):
         events_list = Events(update_cases=None)

@@ -7,11 +7,11 @@ from event.events import Event
 class TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.event1 = Event(eventId=1, timestamp=1067232138, fromVisit=0, title="Visit 1", url="https://example.com",
-                           transition="link", duration=10)
-        cls.event2 = Event(eventId=2, timestamp=1699699158, fromVisit=1, title="Visit 2",
+        cls.event1 = Event(eventId=1, timestamp=1, fromVisit=0, title="Visit 1", url="https://example.com",
+                           transition="link", duration=10, _id=1)
+        cls.event2 = Event(eventId=2, timestamp=1, fromVisit=1, title="Visit 2",
                            url="https://example.com/page",
-                           transition="link", duration=5)
+                           transition="link", duration=5, _id=2)
 
     def test_case_creation_empty(self):
         case = Case()
@@ -27,12 +27,17 @@ class TestCase(unittest.TestCase):
 
 
 class TestCases(unittest.TestCase):
+    event1 = None
+    event2 = None
+    event3 = None
+    event4 = None
+
     @classmethod
     def setUp(cls):
-        cls.event1 = Event(1, 1364207461, 0, "Visit 1", "https://example.com", "link", 10)
-        cls.event2 = Event(2, 1020186737, 1, "Visit 2", "https://example.com/page", "link", 5)
-        cls.event3 = Event(3, 1221717683, 2, "Visit 3", "https://example.com/page/page", "link", 0)
-        cls.event4 = Event(4, 1761405494, 1, "Visit 4", "https://example.com/page/page/page", "link", 995)
+        cls.event1 = Event(1, 1, 1364207461, 0, "Visit 1", "https://example.com", "link", 10)
+        cls.event2 = Event(2, 2, 1020186737, 1, "Visit 2", "https://example.com/page", "link", 5)
+        cls.event3 = Event(3, 3, 1221717683, 2, "Visit 3", "https://example.com/page/page", "link", 0)
+        cls.event4 = Event(4, 4, 1761405494, 1, "Visit 4", "https://example.com/page/page/page", "link", 995)
 
         cls.case1 = Case([cls.event1, cls.event2])
         cls.case2 = Case([cls.event2, cls.event3])
