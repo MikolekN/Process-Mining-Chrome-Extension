@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timedelta
 import pandas as pd
 import pm4py
+import math
 
 from event.event_repository import EventRepository
 from method_return import Success, Failure
@@ -184,10 +185,13 @@ class EventService:
                     self.is_model_up_to_date = False
                     self.is_cases_up_to_date = False
             else:
-                if self.filter_value != 60000:
-                    self.filter_value = 60000
+                smooth_transition_factor = min(1.0, len(events) / 1500.0, time_difference.days / 30.0)
+                target_filter_value = int(smooth_transition_factor * 60000)
+                if self.filter_value != target_filter_value:
+                    self.filter_value = target_filter_value
                     self.is_model_up_to_date = False
                     self.is_cases_up_to_date = False
+                print(self.filter_value)
 
         return Success("Setting filter successful")
 
