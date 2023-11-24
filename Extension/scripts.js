@@ -130,12 +130,29 @@ document.addEventListener("DOMContentLoaded", function () {
         saveFile(blob, "eventlog.xes");
     });
 
-    const getImageButton = document.getElementById("get-image");
-    getImageButton.addEventListener('click', async () => {
-        await fetch('http://localhost:1234/image', {
+    const getImageGetButton = document.getElementById("download-image");
+    getImageGetButton.addEventListener('click', async () => {
+        const blob = await fetch('http://localhost:1234/image', {
             method: "GET",
         })
             .then(response => response.blob())
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        saveFile(blob, "image.png");
+    });
+
+    const getImageUpdateButton = document.getElementById("update-image");
+    getImageUpdateButton.addEventListener('click', async () => {
+        await fetch('http://localhost:1234/image', {
+            method: "GET",
+        })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                }
+                throw new Error('Something went wrong');
+            })
             .then(blob => {
                 if (document.contains(document.getElementById("visualisation-graph"))) {
                     document.getElementById("visualisation-graph").remove();
@@ -148,6 +165,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 container.appendChild(img);
             })
             .catch(error => {
+                const errorDiv = document.getElementById("error").style.display = "flex";
                 console.error('Error:', error);
             });
     });
@@ -204,9 +222,31 @@ document.addEventListener("DOMContentLoaded", function () {
                         const td = document.createElement("td");
                         td.setAttribute("colspan", "3");
 
+                        let duration = event.duration / 1000;
+                        let durationContent = duration.toString() + " s";
+
+                        var a = new Date(event.timestamp);
+                        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                        var year = a.getFullYear();
+                        var month = months[a.getMonth()];
+                        var date = a.getDate();
+                        var hour = a.getHours();
+                        if (hour < 10) {
+                            hour = "0" + hour.toString();
+                        }
+                        var min = a.getMinutes();
+                        if (min < 10) {
+                            min = "0" + min.toString();
+                        }
+                        var sec = a.getSeconds();
+                        if (sec < 10) {
+                            sec = "0" + sec.toString();
+                        }
+                        var timestampContent = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+
                         const div1 = createDetailsDiv("Url:", event.url);
-                        const div2 = createDetailsDiv("Duration:", event.duration);
-                        const div3 = createDetailsDiv("Timestamp:", event.timestamp);
+                        const div2 = createDetailsDiv("Duration:", durationContent);
+                        const div3 = createDetailsDiv("Timestamp:", timestampContent);
                         const div4 = createDetailsDiv("Transition:", event.transition);
 
                         const divCollapse = document.createElement("div");

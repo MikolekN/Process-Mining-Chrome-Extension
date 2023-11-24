@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.classList.add('my-extension-scrollbars');
 
 
-    var scale = 2,
+    var scale = 1,
     panning = false,
     pointX = 0,
     pointY = 0,

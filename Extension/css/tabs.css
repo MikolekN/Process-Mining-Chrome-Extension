@@ -1,4 +1,4 @@
-[role="tablist"] {
+/* [role="tablist"] {
     list-style: none;
     margin: 0;
     padding: 0;
@@ -12,11 +12,9 @@
     color: orangered;
   }
   
-  /* extra styling to make the tabs look better that wasn't in the video */
-  
   
   :root {
-    /* either --dark-mode or --no-dark-mode */
+    
     --color-scheme: var(--no-dark-mode);
   
     --font-family: system-ui;
@@ -39,7 +37,7 @@
     --clr-accent-400: hsl(358, 72%, 50%);
     --clr-accent-500: hsl(358, 72%, 35%);
   
-    /* settings */
+   
     --no-dark-mode: light;
     --dark-mode: dark light;
   }
@@ -85,5 +83,5 @@
     position: absolute;
     white-space: nowrap;
     width: 1px;
-  }
+  } */
   
