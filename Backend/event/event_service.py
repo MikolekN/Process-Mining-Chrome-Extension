@@ -8,6 +8,17 @@ from method_return import Success, Failure
 
 
 def validate_data(data):
+    """
+        Validates the given event data based on expected keys.
+        There are keys that need to be present for an event to be valid.
+
+        Args:
+        - data (dict): The event data to be validated.
+
+        Returns:
+        - Success: If the data is valid.
+        - Failure: If the data is missing any expected key.
+    """
     expected_keys = ['eventId',
                      'timestamp',
                      'fromVisit',
@@ -25,6 +36,17 @@ def validate_data(data):
 
 
 def validate_date_data(data):
+    """
+        Validates the given date data based on expected keys.
+        startDate and endDate keys need to be present for date to be valid.
+
+        Args:
+        - data (dict): The date data to be validated.
+
+        Returns:
+        - Success: If the data is valid.
+        - Failure: If the data is missing any expected keys.
+    """
     expected_keys = ['startDate',
                      'endDate']
     validated_date_data = {}
@@ -37,6 +59,16 @@ def validate_date_data(data):
 
 
 def model_eventlog(xes_path):
+    """
+        Models an event log into an image from a given XES file.
+
+        Args:
+        - xes_path (str): The path to the XES file.
+
+        Returns:
+        - Success: If modeling is successful, providing the path to the generated image.
+        - Failure: If an error occurs during modeling.
+    """
     xes = pm4py.read_xes(xes_path)
     dfg, start_activities, end_activities = pm4py.discovery.discover_dfg(xes, activity_key='title',
                                                                          timestamp_key='timestamp',
@@ -64,10 +96,27 @@ class EventService:
         self.xes_path = None
 
     def get_database(self):
+        """
+            Gets the path to the database.
+
+            Returns:
+            - Success: If the database path is obtained successfully.
+            - Failure: If an error occurs during the process.
+        """
         response = self.repository.get_database()
         return response
 
     def get_events(self, data):
+        """
+            Gets filtered events based on provided data.
+
+            Args:
+            - data (dict): Data specifying the time range for events.
+
+            Returns:
+            - Success: If events are retrieved successfully.
+            - Failure: If an error occurs during the process.
+        """
         validate = validate_date_data(data)
         if not validate.ok:
             return validate
@@ -86,6 +135,16 @@ class EventService:
         return response
 
     def filter_json_events(self, json_data):
+        """
+            Filters list of JSON events based on duration.
+
+            Args:
+            - json_data (list): List of JSON events.
+
+            Returns:
+            - Success: If filtering is successful, providing the filtered JSON events.
+            - Failure: If an error occurs during filtering.
+        """
         filtered_json = []
         for e in json_data:
             if e['duration'] > self.filter_value:
@@ -93,6 +152,15 @@ class EventService:
         return Success(filtered_json)
 
     def set_filter(self, events):
+        """
+            Sets the filter value based on the selected date range.
+
+            Args:
+            - events (list): List of events.
+
+            Returns:
+            - Success: If setting the filter is successful.
+        """
         if len(events) == 0:
             if self.filter_value != 0:
                 self.filter_value = 0
@@ -124,6 +192,15 @@ class EventService:
         return Success("Setting filter successful")
 
     def set_date(self, date_data):
+        """
+            Sets the start and end dates based on provided date data.
+
+            Args:
+            - date_data (dict): Date data specifying start and end dates.
+
+            Returns:
+            - Success: If setting the date is successful.
+        """
         if date_data['startDate'] is not None:
             new_start_date = datetime.strptime(date_data['startDate'], "%Y-%m-%d")
             if self.start_date is None or new_start_date != datetime.strptime(self.start_date, "%Y-%m-%d"):
@@ -149,6 +226,16 @@ class EventService:
         return Success("Setting date successful")
 
     def post_events(self, data):
+        """
+            Posts events to the event database.
+
+            Args:
+            - data (dict): Event data to be posted.
+
+            Returns:
+            - Success: If posting is successful.
+            - Failure: If an error occurs during posting.
+        """
         validate = validate_data(data)
         if not validate.ok:
             return validate
@@ -156,6 +243,7 @@ class EventService:
 
         post = self.repository.post_events(validated_data)
 
+        # If the events is in range of selected date the model will need to be updated
         if post.ok:
             event_date = datetime(1970, 1, 1) + timedelta(milliseconds=int(post.data['timestamp']))
             if self.start_date is None and self.end_date is None:
@@ -180,13 +268,25 @@ class EventService:
 
         return post
 
+    # Gets an event by its ID.
     def get_event_by_id(self, _id):
         return self.repository.get_event_by_id(_id)
 
+    # Gets an event by its eventId.
     def get_event_by_event_id(self, eventId):
         return self.repository.get_event_by_event_id(eventId)
 
     def get_eventlog(self, data):
+        """
+            Gets an event log based on provided data.
+
+            Args:
+            - data (dict): Data specifying the time range for events.
+
+            Returns:
+            - Success: If obtaining the event log is successful.
+            - Failure: If an error occurs during the process.
+        """
         validate = validate_date_data(data)
         if not validate.ok:
             return validate
@@ -209,6 +309,16 @@ class EventService:
         return Success(self.cases)
 
     def chain_events(self, events):
+        """
+            Chains events based on the 'fromVisit' attribute creating cases.
+
+            Args:
+            - events (list): List of events.
+
+            Returns:
+            - Success: If chaining events is successful, providing the chained events.
+            - Failure: If an error occurs during chaining.
+        """
         event_map = {event['eventId']: event for event in events}
         self.cases = []
 
@@ -247,6 +357,16 @@ class EventService:
         return Success(self.cases)
 
     def get_xes(self, data):
+        """
+            Gets XES data based on provided data.
+
+            Args:
+            - data (dict): Data specifying the time range for events.
+
+            Returns:
+            - Success: If obtaining XES data is successful.
+            - Failure: If an error occurs during the process.
+        """
         validate = validate_date_data(data)
         if not validate.ok:
             return validate
@@ -280,6 +400,13 @@ class EventService:
         return Success(self.xes_path)
 
     def export_to_xes(self):
+        """
+            Exports event log data to XES format.
+
+            Returns:
+            - Success: If exporting to XES is successful, providing the path to the XES file.
+            - Failure: If an error occurs during exporting.
+        """
         df = self.read_data_to_export()
         xes_path = os.path.join(os.path.expanduser('~'), "XES.xes")
         try:
@@ -289,6 +416,12 @@ class EventService:
         return Success(xes_path)
 
     def read_data_to_export(self):
+        """
+            Prepares data for export to XES format.
+
+            Returns:
+            - DataFrame: Pandas DataFrame containing data for export.
+        """
         case_ids = []
         event_ids = []
         from_ids = []
@@ -325,6 +458,16 @@ class EventService:
         return df
 
     def get_image(self, data):
+        """
+            Gets an image based on provided data.
+
+            Args:
+            - data (dict): Data specifying the time range for events.
+
+            Returns:
+            - Success: If obtaining the image is successful.
+            - Failure: If an error occurs during the process.
+        """
         validate = validate_date_data(data)
         if not validate.ok:
             return validate
