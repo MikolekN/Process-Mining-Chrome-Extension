@@ -1,18 +1,11 @@
 let events = [];
-let startDate = null;
-let duration = 0;
-let currUrl = undefined;
-let prevUrl = undefined;
-let currEvent = undefined;
-let prevEvent = undefined;
-let currTabId = undefined;
-let prevTabId = undefined;
 let tabToUrl = {};
-let currTabQty = -1;
-let prevTabQty = -1;
+let prevUrl = undefined, currUrl = undefined;
+let prevTabId = undefined, currTabId = undefined;
+let prevTabQty = -1, currTabQty = -1;
 let removing = false;
-const weekInMilliseconds = 7*24*60*60*1000; // one week calculated in seconds, maybe some constant for that
 
+const weekInMilliseconds = 7*24*60*60*1000; // one week calculated in seconds, maybe some constant for that
 const replacements = {
     'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n', 'ó': 'o', 'ś': 's', 'ź': 'z', 'ż': 'z',
     'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N', 'Ó': 'O', 'Ś': 'S', 'Ź': 'Z', 'Ż': 'Z'
