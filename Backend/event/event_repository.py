@@ -16,9 +16,11 @@ class EventRepository:
         self.db = os.path.join(home_directory, db_name + ".json")
         self.create_file_if_not_exists()
 
+    # Function to get the path to the database
     def get_database(self):
         return Success(self.db)
 
+    # Function to get events from the database
     def get_events(self):
         try:
             with open(self.db, 'r') as file:
@@ -29,6 +31,7 @@ class EventRepository:
             events = []
         return Success(events)
 
+    # Helper function to create the database file if it doesn't exist
     def create_file_if_not_exists(self):
         try:
             with open(self.db, 'r'):
@@ -37,6 +40,7 @@ class EventRepository:
             with open(self.db, 'w') as file:
                 json.dump([], file)
 
+    # Function to save events to the database
     def post_events(self, data):
         self.create_file_if_not_exists()
 
@@ -63,6 +67,7 @@ class EventRepository:
 
         return Success(data)
 
+    # Function to get an event by its ID from the database
     def get_event_by_id(self, _id):
         try:
             with open(self.db, 'r') as file:
@@ -76,6 +81,7 @@ class EventRepository:
                 return Success(event)
         return Failure("No event with given _id was found.")
 
+    # Function to get an event by its eventId from the database
     def get_event_by_event_id(self, eventId):
         try:
             with open(self.db, 'r') as file:

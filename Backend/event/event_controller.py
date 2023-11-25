@@ -11,12 +11,14 @@ class EventController:
     def construct_event_blueprint(self):
         event_blueprint = Blueprint('event_blueprint', __name__)
 
+        # Helper function to parse date data from a Flask request
         def parse_date_data(request):
             if request.is_json:
                 return request.get_json()
             else:
                 return {}
 
+        # Route for retrieving the database
         @event_blueprint.route('/database', methods=['GET'])
         def get_database():
             result = self.service.get_database()
@@ -32,6 +34,7 @@ class EventController:
                                  max_age=None)
             return make_response(jsonify(result.message), 404)
 
+        # Route for retrieving events
         @event_blueprint.route('', methods=['GET'])
         def get_events():
             data = parse_date_data(request)
@@ -40,6 +43,7 @@ class EventController:
                 return make_response(jsonify(result.data), 200)
             return make_response(jsonify(result.message), 500)
 
+        # Route for posting event
         @event_blueprint.route('', methods=['POST'])
         def post_events():
             data = parse_date_data(request)
@@ -48,6 +52,7 @@ class EventController:
                 return make_response(jsonify(result.data), 200)
             return make_response(jsonify(result.message), 500)
 
+        # Route for retrieving an event by its ID
         @event_blueprint.route('/event/<string:_id>', methods=['GET'])
         def get_event_by_id(_id):
             result = self.service.get_event_by_id(_id)
@@ -55,6 +60,7 @@ class EventController:
                 return make_response(jsonify(result.data), 200)
             return make_response(jsonify(result.message), 404)
 
+        # Route for retrieving an event by its eventId
         @event_blueprint.route('/eventId/<int:eventId>', methods=['GET'])
         def get_event_by_event_id(eventId):
             result = self.service.get_event_by_event_id(eventId)
@@ -62,6 +68,7 @@ class EventController:
                 return make_response(jsonify(result.data), 200)
             return make_response(jsonify(result.message), 404)
 
+        # Route for retrieving an event log
         @event_blueprint.route('/eventlog', methods=['POST'])
         def get_eventlog():
             data = parse_date_data(request)
@@ -70,6 +77,7 @@ class EventController:
                 return make_response(jsonify(result.data), 200)
             return make_response(jsonify(result.message), 404)
 
+        # Route for retrieving an XES file
         @event_blueprint.route('/xes', methods=['POST'])
         def get_xes():
             data = parse_date_data(request)
@@ -86,6 +94,7 @@ class EventController:
                                  max_age=None)
             return make_response(jsonify(result.message), 500)
 
+        # Route for retrieving an image
         @event_blueprint.route('/image', methods=['POST'])
         def get_image():
             data = parse_date_data(request)
