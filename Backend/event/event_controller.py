@@ -62,7 +62,7 @@ class EventController:
                 return make_response(jsonify(result.data), 200)
             return make_response(jsonify(result.message), 404)
 
-        @event_blueprint.route('/eventlog', methods=['GET'])
+        @event_blueprint.route('/eventlog', methods=['POST'])
         def get_eventlog():
             data = parse_date_data(request)
             result = self.service.get_eventlog(data)
@@ -70,7 +70,7 @@ class EventController:
                 return make_response(jsonify(result.data), 200)
             return make_response(jsonify(result.message), 404)
 
-        @event_blueprint.route('/xes', methods=['GET'])
+        @event_blueprint.route('/xes', methods=['POST'])
         def get_xes():
             data = parse_date_data(request)
             result = self.service.get_xes(data)
@@ -86,7 +86,7 @@ class EventController:
                                  max_age=None)
             return make_response(jsonify(result.message), 500)
 
-        @event_blueprint.route('/image', methods=['GET'])
+        @event_blueprint.route('/image', methods=['POST'])
         def get_image():
             data = parse_date_data(request)
             result = self.service.get_image(data)
