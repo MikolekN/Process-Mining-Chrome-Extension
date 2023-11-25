@@ -18,7 +18,6 @@ const replacements = {
     'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N', 'Ó': 'O', 'Ś': 'S', 'Ź': 'Z', 'Ż': 'Z'
 };
 
-
 const getCurrentTab = async function() {
 	let currTab = undefined;
 	let currTabInfo = undefined;
@@ -29,7 +28,6 @@ const getCurrentTab = async function() {
 			currentWindow: true
 		}, function(currentTab) {
 			resolve(currentTab);
-			//console.log(currentTab);
 			currTab = currentTab[0];
 
 			currTabInfo = {
@@ -37,7 +35,6 @@ const getCurrentTab = async function() {
 				"url": currTab.url
 			}
 
-			//console.log(currTabInfo);
 			return currTabInfo;
 		})
 	});
@@ -45,7 +42,7 @@ const getCurrentTab = async function() {
 	return currTabInfo;
 }
 
-const getVisits = async function(url, idx) {
+const getVisit = async function(url, idx) {
 	const visits = await new Promise(resolve => {
 		chrome.history.getVisits({ url: url }, function(visits) {
 			resolve(visits);
@@ -61,9 +58,9 @@ const getHistoryItems = async function() {
 
 	const historyItems = await new Promise(resolve => {
 		chrome.history.search({
-			'text': '',               // Return every history item....
+			'text': '',               // return every history item....
 			'startTime': oneWeekAgo,  // that was accessed less than one week ago.
-			'maxResults': 5000         // Optionally state a limit
+			'maxResults': 5000         // state a limit of results
 		}, 
 		function(historyItems) {
 			resolve(historyItems);
@@ -79,7 +76,7 @@ const updateTitleIfIncorrect = async function(title, url) {
 		await getHistoryItems().then(function(result) {
 			historyItems = result;
 		});
-		console.log("weszło0");
+
 		return getTitleFromHistoryItemsByUrl(historyItems, url);
 	}
 	return title;
@@ -92,7 +89,7 @@ const getTitleFromHistoryItemsByUrl = function(historyItems, url) {
 		}
 	}
 
-	return url.slice(0, 40); // to chyba nie działa ale jeszcze do sprawdzenia
+	return url.slice(0, 40);
 }
 
 const getUrlQtyInEvents = function(url, events) {
@@ -140,7 +137,7 @@ const cleanEventData = function(event) {
 
 const postEventData = async function(event) {
 	let eventToPost = cleanEventData(event);
-	console.log(eventToPost); // delete
+
 	await fetch('http://localhost:1234/', {
 		method: "POST",
 		body: JSON.stringify(eventToPost),
@@ -167,51 +164,38 @@ const replaceSpecialChars = (str) => {
 								.replace(/[ąćęłńóśźż]/gi, (letter) => replacements[letter]) // Remove accents e.g. polish letters
 }
 
-console.log("Background script is running.");
-//console.log(events);
-chrome.storage.local.get(['events']).then(async function(result) {
-	console.log("Value currently is " + result.events);
+const updateEvent = async function(e, lastVisit) {
+	
+	await updateTitleIfIncorrect(e.title, e.url).then(function(result) {
+		e.title = result;
+	});
+	e.eventId = lastVisit.visitId;
+	e.fromVisit = lastVisit.referringVisitId;
+	e.transition = lastVisit.transition;
+	e.leaveTime = new Date().getTime();
+	e.title = replaceSpecialChars(e.title);
 
+	console.log("EWENT: ", e);
+	return e;
+}
+
+chrome.storage.local.get(['events']).then(async function(result) {
+	
 	let eventsParsed = JSON.parse(result.events);
 
-	console.log(eventsParsed);
-
-
-	for (const e of eventsParsed) {
-		/*const visits = await new Promise(resolve => {
-			chrome.history.getVisits({ url: e.url }, function(visits) {
-				resolve(visits);
-			});
-		});*/
-
+	for (let e of eventsParsed) {
 		let urlQty = getUrlQtyInEvents(e.url, eventsParsed);
 		
 		let lastVisit;
-		await getVisits(e.url, urlQty).then(function(result) {
+		await getVisit(e.url, urlQty).then(function(result) {
 			lastVisit = result;
 		});
-
-		//console.log(visits);
-		//console.log(events);
-
-		//lastVisit = visits.at((-1) * urlQty); 
-
-		//console.log("TITLE: ")
 		
-		await updateTitleIfIncorrect(e.title, e.url).then(function(result) {
-			e.title = result;
+		await updateEvent(e, lastVisit).then(function(result) {
+			e = result;
 		});
-		
-		e.eventId = lastVisit.visitId;
-		//e.isLocal = lastVisit.isLocal;
-		e.fromVisit = lastVisit.referringVisitId;
-		e.transition = lastVisit.transition;
-		//e.timestamp = lastVisit.visitTime
-		e.leaveTime = new Date().getTime();
-		e.title = replaceSpecialChars(e.title);
 
 		let prevEvent = getEventByUrlAndTabId(e.url, e.tabId, eventsParsed);
-		console.log(prevEvent);
 		await postEventData(prevEvent);
 
 		eventsParsed = eventsParsed.filter(function (event) {
@@ -220,10 +204,6 @@ chrome.storage.local.get(['events']).then(async function(result) {
 	}
 	chrome.storage.local.remove(['events']);
 });
-
-//chrome.storage.local.get(['events']).then((result) => {
-//	console.log("Value currently is " + result.events);
-//});
 
 let prevtime = undefined;
 let currTime = undefined;
@@ -237,21 +217,19 @@ chrome.history.onVisited.addListener(async function(historyItem) {
 	});
 
 	const [loadingTab] = await new Promise(resolve => {
-		chrome.tabs.query({ // na razie zostawie takie coś ale wcześniej było active itd
-		// dla tej wartosci a nie active jest dobre id dla otwartej w nowej karcie
+		chrome.tabs.query({
 		status: "loading"
 	  }, function(loadingTab) {
 		resolve(loadingTab);
-	  })});
+	})});
 
-	console.log("CURR TAb", currentTab);
 	
 	const tabs = await new Promise(resolve => {
 	chrome.tabs.query({}, function(tabs) {
 		resolve(tabs);
 	})
 	});
-	//console.log('Number of open tabs ', tabs.length);
+
 	prevTabQty = currTabQty;
 	currTabQty = tabs.length;
 
@@ -271,21 +249,14 @@ chrome.history.onVisited.addListener(async function(historyItem) {
 		currTabId = currentTab.id;
 	}
 
-	// trzeba dodac przesuwanie tabId dla current też, ale to wystarczy skopiować z kodu niżej
 	prevTabId = currTabId;
-	//currTabId = currentTab.id;
-	console.log(currTabId);
 
 	prevTime = currTime;
 	currTime = new Date().getTime();
 
-	if (Math.abs(currTime - prevTime) > 1000) { // większy niż 1 sek, ten czas do ustalenia jeszcze
-		console.log("GG");
-	}
-
 	event_data = {
 		"url": currUrl,
-		"title": historyItem.title, // moze bedzie mozliwosc usuniecia
+		"title": historyItem.title,
 		"tabId": currTabId,
 		"leaveTime": null,
 		"duration": 0,
@@ -296,29 +267,10 @@ chrome.history.onVisited.addListener(async function(historyItem) {
 	}
 	events.push(event_data);
 
-	//
-	//
-		// popracować nad błędem: Uncaught (in promise) SyntaxError: "undefined" is not valid JSON związanym z
-		// listą events
-	//
-	//
-
-	chrome.storage.local.set({ 'events': JSON.stringify(events) }).then(() => {
-		console.log("Value is set");
-	});
-
-	chrome.storage.local.get(['events']).then((result) => {
-		console.log("Value currently is " + result.events);
-	});
-	//localStorage.setItem("events", JSON.stringify(events));
-
-	console.log("EVENTS LIST = ", events);
-
-	console.log("V -> ", prevUrl, " ", currUrl);
-
+	chrome.storage.local.set({ 'events': JSON.stringify(events) });
 
 	let prevEvent = getEventByUrlAndTabId(prevUrl, prevTabId, events);
-	if (prevEvent !== undefined && prevEvent.tabId === currTabId) { // było prevEvent.tabId
+	if (prevEvent !== undefined && prevEvent.tabId === currTabId) {
 		prevEvent.endTime = new Date().getTime();
 		prevEvent.duration += prevEvent.endTime - prevEvent.startTime;
 	}
@@ -326,54 +278,37 @@ chrome.history.onVisited.addListener(async function(historyItem) {
 
 chrome.tabs.onRemoved.addListener(async function(tabId) {
 
-	// nie wiem czy zostawać przy tej tablicy, bo moglbym szukac ostatniego url w events ktory ma tabId
 	let url = tabToUrl[tabId];
 	console.log(url, tabId);
 
 	let eventsInRemovedTab = getEventsByTabId(tabId, events);
 	console.log(eventsInRemovedTab);
 	removing = true;
-	for (const [i, e] of eventsInRemovedTab.entries()) {
-		/*const visits = await new Promise(resolve => {
-			chrome.history.getVisits({ url: e.url }, function(visits) {
-				resolve(visits);
-			});
-		});*/
+	for (let [i, e] of eventsInRemovedTab.entries()) {
 
 		let urlQty = getUrlQtyInEvents(e.url, events);
 		
 		let lastVisit;
-		await getVisits(e.url, urlQty).then(function(result) {
+		await getVisit(e.url, urlQty).then(function(result) {
 			lastVisit = result;
 		});
-
-		//console.log(visits);
-		console.log(events);
-
-		//lastVisit = visits.at((-1) * urlQty); 
-
-		//console.log("TITLE: ")
 		
 		await updateTitleIfIncorrect(e.title, e.url).then(function(result) {
 			e.title = result;
 		});
 		
-		e.eventId = lastVisit.visitId;
-		//e.isLocal = lastVisit.isLocal;
-		e.fromVisit = lastVisit.referringVisitId;
-		e.transition = lastVisit.transition;
-		//e.timestamp = lastVisit.visitTime
-		e.leaveTime = new Date().getTime();
-		
+		await updateEvent(e, lastVisit).then(function(result) {
+			e = result;
+		});
+
 		if (i === eventsInRemovedTab.length - 1) { 
 			if (tabId === currTabId) {
 				e.endTime = new Date().getTime();
 				e.duration += e.endTime - e.startTime;
 			}
 		}
-		e.title = replaceSpecialChars(e.title);
+		
 		let prevEvent = getEventByUrlAndTabId(e.url, e.tabId, events);
-		console.log(prevEvent);
 		await postEventData(prevEvent);
 
 		events = events.filter(function (event) {
@@ -381,16 +316,11 @@ chrome.tabs.onRemoved.addListener(async function(tabId) {
 		});
 	}
 
-	// Remove information for non-existent tab
 	delete tabToUrl[tabId];
 
-	console.log(events);
 	chrome.storage.local.remove(['events']);
-	chrome.storage.local.set({ 'events': JSON.stringify(events) }).then(() => {
-		console.log("Value is set");
-	});
+	chrome.storage.local.set({ 'events': JSON.stringify(events) });
 
-	console.log("R -> ", prevUrl, " ", currUrl);
 	removing = false;
 });
 
@@ -403,7 +333,6 @@ chrome.tabs.onActivated.addListener(async function(activeInfo) {
 	if (prevEvent !== undefined) {
 		prevEvent.endTime = new Date().getTime();
 		prevEvent.duration += prevEvent.endTime - prevEvent.startTime;
-		console.log("pe -> ", prevEvent);
 	}
 
 	prevUrl = currUrl;
@@ -417,129 +346,37 @@ chrome.tabs.onActivated.addListener(async function(activeInfo) {
 	currUrl = currentTab.url;
 	currTabId = currentTab.id;
 
-	//console.log(currUrl, currTabId);
-
 	let currEvent = getEventByUrlAndTabId(currUrl, currTabId, events);
 	if (currEvent !== undefined) {
 		currEvent.startTime = new Date().getTime();
-		console.log("ce -> ", currEvent);
 	}
 
-	console.log("A -> ", prevUrl, " ", currUrl);
-
-	// currentTab in this moment indicates previous active tab
 	let eventsInCurrentTab = getEventsByTabId(currTabId, events);
-	let lastEventInCurrentTab = eventsInCurrentTab.pop(); // dla RM bez tego, bo chce wyslac wszystko co w danej karcie
-	console.log(eventsInCurrentTab); // wszystkie bez ostatniego eventu
-	console.log(lastEventInCurrentTab); // ostatni event
 
 	if (removing === false) {
 		for (let e of eventsInCurrentTab) {
-			/*const visits = await new Promise(resolve => {
-			chrome.history.getVisits({ url: e.url }, function(visits) {
-				resolve(visits);
-			});
-			});*/
 
-			//console.log("VISITS: ", visits);
-
-			// pomysł jest taki ze jesli refId == 0 to zostawiam na ostatnim, jesli nie to szukam w visits
-			// elementu ktory ma refId na poprzedni eventId/visitId
-			// albo tą część przenieść do onvisited ale pewnie tam cos znowu by sie wysypało
-			// jeszcze inny pomysł bo tutaj chodzi o to, że kilka razy pojawia się ten sam url
-			// i ja biore po prostu ostatni, moze policzyc ile jest tych samych i cofnąć od konca listy visits
-			// np. url == "https://enauczanie.pg.edu.pl/moodle/login/index.php?authCAS=CAS" jest 3 razy => times
-			// no to wtedy visits.at( (-times) )
-			// i moze zawsze brać liczba wystąpien od konca ale to też trzebaby przesuwać albo liczyś każdorazowo i 
-			// usuwać z listy po wysłaniu z listy events
-
-			//console.log(events);
 			let urlQty = getUrlQtyInEvents(e.url, events);
 			
 			let lastVisit;
-			await getVisits(e.url, urlQty).then(function(result) {
+			await getVisit(e.url, urlQty).then(function(result) {
 				lastVisit = result;
 			});
 
-			//lastVisit = visits.at((-1) * urlQty); 
-
-
-
-			//let currentTime = new Date().getTime();
-			//let oneWeekAgo = currentTime - weekInMilliseconds;
-
-			// to wywołanie moze w ogole dac do funkcji getTitleFromHistoryItemsByUrl 
-			// bo tylko wtedy jest potrzebne
-			
-			//console.log("HIST_ITEMS = ", historyItems);
-			//let visitedHistoryItem = historyItems.at(0); // first found
-			//console.log("visited HI == ", visitedHistoryItem);
-
-
-			//console.log("TITLE: ")
-			await updateTitleIfIncorrect(e.title, e.url).then(function(result) {
-				e.title = result;
+			await updateEvent(e, lastVisit).then(function(result) {
+				e = result;
 			});
-			e.eventId = lastVisit.visitId;
-			
-			//e.isLocal = lastVisit.isLocal;
-			
-			e.fromVisit = lastVisit.referringVisitId;
-			e.transition = lastVisit.transition;
-			//
-			// wyzej przy onvisited biore tytul jak nie to mozna przeszukać histItems po url
-			// dla YouTube trzeba zrobić szukanie po histItems i można też przetestować dla wszystkich czy to
-			// się opłaci czasowo
-			//
-			// przekopiować logikę wysyłania z poprzedniej wersji bo tam też miałem sumowanie pod duration
-			// dodatkowo trzeba popracować nad duration
-			//e.title = visitedHistoryItem.title;
-			
-			//e.timestamp = lastVisit.visitTime;
 
-			// to liczenie duration powinienem mieć chyba tak jak wcześniej w on visited
-			// tam będzie sie sumować a na onActivated lub removed dodatkowe doliczenie
-
-			//e.endTime = new Date().getTime();
-			//e.duration += e.endTime - e.startTime;
-			e.title = replaceSpecialChars(e.title);
 			let prevEvent = getEventByUrlAndTabId(e.url, e.tabId, events);
 			await postEventData(prevEvent);
-
-			// trzeba dopracowac wysylanie na evencie on removed
-			// sprawdzic czy działa doliczanie czasu w activated i removed
 
 			events = events.filter(function (event) {
 				return event !== prevEvent;
 			});
-
-			//console.log(events);
 		}
 	}
-	let eventsInCurrentTab2 = getEventsByTabId(currTabId, events);
-	console.log(eventsInCurrentTab2);
 });
 
 chrome.tabs.onUpdated.addListener(async function(tabId, tab) {
 	tabToUrl[tabId] = tab.url;
-	console.log("U -> ", prevUrl, " ", currUrl);
 });
-
-chrome.windows.onRemoved.addListener(async function(windowId) {
-	console.log("WINDOW REMOVED ", windowId);
-
-	const tabs = await new Promise(resolve => {
-		chrome.tabs.query({
-		windowId: windowId
-	}, function(tabs) {
-		resolve(tabs);
-	})});
-	console.log(tabs);
-	console.log(events);
-
-
-	// to nie dziala
-	//for (let e of events) {
-	//	postEventData(e);
-	//}
-})
