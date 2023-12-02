@@ -35,10 +35,24 @@ class EventControllerTestCase(TestCase):
     def tearDown(self):
         os.remove(self.db)
 
-    def test_get_database(self):
+    def test_get_database_empty(self):
         response = self.client.get('/database')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, [])
+
+    def test_get_database_one_event(self):
+        with open(self.db, 'w') as file:
+            json.dump(self.event, file)
+        response = self.client.get('/database')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json, self.event)
+
+    def test_get_database_full(self):
+        with open(self.db, 'w') as file:
+            json.dump([self.event, self.event], file)
+        response = self.client.get('/database')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json, [self.event, self.event])
 
     def test_get_events_empty(self):
         response = self.client.get('/')
