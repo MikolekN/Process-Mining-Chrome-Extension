@@ -82,12 +82,13 @@ hr.divider-line {
 
 .tab-container {
 	height: 400px;
-	padding-top: 125px;
+	padding-top: 100px;
 }
 
 .alert-container {
 	display: flex;
 	justify-content: space-between;
+	align-items: center;
 }
 
 .filter-container {

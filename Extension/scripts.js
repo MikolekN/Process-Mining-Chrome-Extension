@@ -464,7 +464,7 @@ document.addEventListener("DOMContentLoaded", function () {
     filterButton.addEventListener('click', function() {
         const activeTab = document.querySelector("button.active");
 
-        if (activeTab.textContent.trim() === "Cases") {
+        if (activeTab.textContent.trim() === "Event Log") {
             getEventLogData();
         }
         else if (activeTab.textContent.trim() === "Visualisation") {
