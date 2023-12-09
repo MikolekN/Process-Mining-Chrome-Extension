@@ -328,6 +328,7 @@ class EventService:
                        and (self.end_date is None or datetime(1970, 1, 1) + timedelta(milliseconds=int(event['timestamp'])) <= datetime.strptime(self.end_date, "%Y-%m-%d"))
                 ] for case in self.cases
             ]
+
         self.cases = [chain for chain in self.cases if len(chain) != 0]
         
         return Success(self.cases)

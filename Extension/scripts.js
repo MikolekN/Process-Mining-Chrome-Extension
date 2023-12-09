@@ -1,6 +1,6 @@
+let startDate = undefined, endDate = undefined;
+
 const saveFile = async function(blob, suggestedName) {
-    // Feature detection. The API needs to be supported
-    // and the app not run in an iframe.
     const supportsFileSystemAccess =
         'showSaveFilePicker' in window &&
         (() => {
@@ -10,43 +10,231 @@ const saveFile = async function(blob, suggestedName) {
                 return false;
             }
         })();
-    // If the File System Access API is supported…
     if (supportsFileSystemAccess) {
         try {
-            // Show the file save dialog.
             const handle = await showSaveFilePicker({
                 suggestedName,
             });
-            // Write the blob to the file.
             const writable = await handle.createWritable();
             await writable.write(blob);
             await writable.close();
             return;
         } catch (err) {
-            // Fail silently if the user has simply canceled the dialog.
             if (err.name !== 'AbortError') {
                 console.error(err.name, err.message);
                 return;
             }
         }
     }
-    // Fallback if the File System Access API is not supported…
-    // Create the blob URL.
     const blobURL = URL.createObjectURL(blob);
-    // Create the "a" element and append it invisibly.
     const a = document.createElement('a');
     a.href = blobURL;
     a.download = suggestedName;
     a.style.display = 'none';
     document.body.append(a);
-    // Click the element.
     a.click();
-    // Revoke the blob URL and remove the element.
     setTimeout(() => {
         URL.revokeObjectURL(blobURL);
         a.remove();
     }, 1000);
 };
+
+const getVisualisation = async function() {
+    removeElementById("visualisation-graph");
+    const dateFilter = {
+        'startDate': startDate,
+        'endDate': endDate
+    }
+
+    await fetch('http://localhost:1234/image', {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dateFilter)
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.blob();
+        }
+        throw new Error('Something went wrong');
+    })
+    .then(blob => {
+        document.getElementById("visualisation-error").style.display = "none";
+        displayVisualisationImage(blob);
+    })
+    .catch(error => {
+        document.getElementById("visualisation-error").style.display = "flex";
+        console.error('Error:', error);
+    });
+}
+
+const getEventLogData = async function() {
+    
+    const dateFilter = {
+        'startDate': startDate,
+        'endDate': endDate
+    }
+
+    await fetch('http://localhost:1234/eventlog', {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dateFilter)
+    })
+        .then(response => response.json())
+        .then(data => {
+            removeElementById("eventlog-wrapper");
+
+            const visTab = document.getElementById("event-log");
+            visTab.style.height = "auto";
+
+            let idx = 0;
+            const wrapper = document.createElement("div");
+            wrapper.setAttribute("id", "eventlog-wrapper");
+           
+            for (let caseId in data) {
+                const card = document.createElement("div");
+                card.setAttribute("class", "table-responsive card eventlog-table");
+
+                const header = document.createElement("div");
+                header.setAttribute("class", "card-header");
+                header.textContent = "Case ID: " + caseId;
+                card.appendChild(header);
+                const content = document.createElement("div");
+                content.setAttribute("class", "card-content");
+                const table = createTable("table");
+                const tbody = document.createElement("tbody");
+                
+                for (let event of data[caseId]) {
+                    const row = createAccordionElement("tr", idx);
+
+                    const eventIdCell = document.createElement("td");
+                    const fromVisitCell = document.createElement("td");
+                    const titleCell = document.createElement("td");
+                    eventIdCell.textContent = event.eventId;
+                    fromVisitCell.textContent = event.fromVisit;
+                    titleCell.textContent = event.title;
+
+                    row.appendChild(eventIdCell);
+                    row.appendChild(fromVisitCell);
+                    row.appendChild(titleCell);
+
+                    const hideRow = document.createElement("tr");
+                    hideRow.setAttribute("class", "hide-table-padding");
+                    const td = document.createElement("td");
+                    td.setAttribute("colspan", "3");
+
+                    const div1 = createDetailsDiv("Url:", event.url);
+                    const div2 = createDetailsDiv("Duration:", getDuration(event.duration));
+                    const div3 = createDetailsDiv("Timestamp:", getDateFromTimestamp(event.timestamp));
+                    const div4 = createDetailsDiv("Transition:", event.transition);
+
+                    const divCollapse = document.createElement("div");
+                    divCollapse.setAttribute("id", "collapse" + idx);
+                    divCollapse.setAttribute("class", "collapse in p-3 border border-primary rounded");
+
+                    divCollapse.appendChild(div1);
+                    divCollapse.appendChild(div2);
+                    divCollapse.appendChild(div3);
+                    divCollapse.appendChild(div4);
+
+                    td.appendChild(divCollapse);
+
+                    hideRow.appendChild(td);
+
+                    tbody.appendChild(row);
+                    tbody.appendChild(hideRow);
+                    idx += 1;
+                }
+                table.appendChild(tbody);
+                content.appendChild(table);
+                card.appendChild(content);
+                wrapper.appendChild(card);
+            }
+            document.getElementById("eventlog-data").appendChild(wrapper);
+        })
+        .catch(error => {
+            document.getElementById("eventlog-error").style.display = "flex";
+            console.error('Error:', error);
+        });
+}
+
+const getEventsData = async function() {
+
+    const dateFilter = {
+        "startDate": startDate,
+        "endDate": endDate
+    }
+
+    await fetch('http://localhost:1234/', {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dateFilter)
+    })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Something went wrong');
+        })
+        .then(data => {
+            console.log(data);
+
+            removeElementById("events-wrapper");
+
+            const visTab = document.getElementById("events");
+            visTab.style.height = "auto";
+
+            console.log(data);
+            let idx = 0;
+            const wrapper = document.createElement("div");
+            wrapper.setAttribute("id", "events-wrapper");
+        
+            for (let i in data) {
+                const event = data[i];
+                console.log(event);
+
+                const card = document.createElement("div");
+                card.setAttribute("class", "card events-card");
+                const header = createAccordionElement("div", idx);
+                header.setAttribute("class", "accordion-toggle collapsed card-header");
+                header.innerHTML = "<b>Visit at: </b>" + event.title;
+                card.appendChild(header);
+                const content = document.createElement("div");
+                content.setAttribute("class", "card-content");
+
+                const div1 = createDetailsDiv("Url:", event.url);
+                const div2 = createDetailsDiv("Duration:", getDuration(event.duration));
+                const div3 = createDetailsDiv("Timestamp:", getDateFromTimestamp(event.timestamp));
+                const div4 = createDetailsDiv("Transition:", event.transition);
+
+                const divCollapse = document.createElement("div");
+                divCollapse.setAttribute("id", "collapse" + idx);
+                divCollapse.setAttribute("class", "collapse in p-3 border border-primary rounded");
+
+                divCollapse.appendChild(div1);
+                divCollapse.appendChild(div2);
+                divCollapse.appendChild(div3);
+                divCollapse.appendChild(div4);
+
+                content.appendChild(divCollapse);
+
+                card.appendChild(content);
+                wrapper.appendChild(card);
+
+                idx += 1;
+            }
+            document.getElementById("events-data").appendChild(wrapper);
+        })
+        .catch(error => {
+            const errorDiv = document.getElementById("events-error").style.display = "flex";
+            console.error('Error:', error);
+        });
+}
 
 const createTableTh = function(content, className) {
     const th = document.createElement("th");
@@ -68,20 +256,18 @@ const createTable = function(className) {
     const th1 = createTableTh("Event ID", "tab-head");
     const th2 = createTableTh("Ref Event ID", "tab-head");
     const th3 = createTableTh("Page Title");
-    //const th4 = createTableTh("");
+
     tr.appendChild(th1);
     tr.appendChild(th2);
     tr.appendChild(th3);
-    //tr.appendChild(th4);
     thead.appendChild(tr);
-    
     table.appendChild(thead);
 
     return table;
 }
 
-const createMainRow = function(idx) {
-    const row = document.createElement("tr");
+const createAccordionElement = function(element, idx) {
+    const row = document.createElement(element);
     row.setAttribute("class", "accordion-toggle collapsed");
     row.setAttribute("id", "accordion" + idx);
     row.setAttribute("data-bs-toggle", "collapse");
@@ -94,15 +280,11 @@ const createMainRow = function(idx) {
 
 const createDetailsDiv = function(label, content) {
     const div1 = document.createElement("div");
-    div1.setAttribute("class", "col-2");
-    div1.textContent = label;
-    const div2 = document.createElement("div");
-    div2.setAttribute("class", "col-6");
-    div2.textContent = content;
+    div1.setAttribute("class", "col");
+    div1.innerHTML = "<b>" + label + "</b> " + content;
     const div3 = document.createElement("div");
     div3.setAttribute("class", "row");
     div3.appendChild(div1);
-    div3.appendChild(div2);
 
     return div3;
 }
@@ -127,8 +309,8 @@ const getDateFromTimestamp = function(timestamp) {
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     let year = eventDate.getFullYear();
     let month = months[eventDate.getMonth()];
-    let date = eventDate.getDate();
 
+    let date = formatDateElement(eventDate.getDate());
     let hour = formatDateElement(eventDate.getHours());
     let min = formatDateElement(eventDate.getMinutes());
     let sec = formatDateElement(eventDate.getSeconds());
@@ -161,100 +343,94 @@ const displayVisualisationImage = function(blob) {
     createVisualisationImage(blob);
 }
 
+const getCurrentDate = function() {
+    let date = new Date();
+    let year = date.getFullYear();
+    let month = formatDateElement(date.getMonth() + 1);
+    let day = formatDateElement(date.getDate());
+    
+    return [year, month, day].join('-');
+}
+
+const setCurrentDate = function() {
+    let date = getCurrentDate();
+    
+    document.getElementById("start-date").value = date;
+    document.getElementById("end-date").value = date;
+}
+
 document.addEventListener("DOMContentLoaded", function () {
 
-    //const tooltip = document.querySelector('[data-toggle="tooltip"]').tooltip();
+    setCurrentDate();
+    getVisualisation();
+
+    const filterToggle = document.getElementById("filter-toggle");
+    filterToggle.addEventListener('click', function() {
+        if (filterToggle.getAttribute("aria-expanded") === "true") {
+            startDate = document.getElementById("start-date").value;
+            endDate = document.getElementById("end-date").value;
+            console.log(startDate, endDate);
+        }
+        else if (filterToggle.getAttribute("aria-expanded") === "false") {
+            startDate = undefined;
+            endDate = undefined;
+        }
+    });
+
+    const resetFilterButton = document.getElementById("reset-filter");
+    resetFilterButton.addEventListener('click', function() {
+        startDate = undefined;
+        endDate = undefined;
+
+        document.getElementById("start-date").value = "";
+        document.getElementById("end-date").value = "";
+
+        getEventLogData();
+    });
 
     const getDatabaseButton = document.getElementById("get-database");
     getDatabaseButton.addEventListener('click', async () => {
-        const blob = await fetch('http://localhost:1234/database', {
+        await fetch('http://localhost:1234/database', {
             method: "GET",
         })
-            .then(response => response.blob())
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        saveFile(blob, "db.json");
+        .then(async response => {
+            const blob = await response.blob()
+            saveFile(blob, "db.json");
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     });
 
     const getEventlogXesButton = document.getElementById("get-eventlog-xes");
     getEventlogXesButton.addEventListener('click', async () => {
 
-        const startDatepicker = document.getElementById("start-date");
-        const endDatepicker = document.getElementById("end-date");
-        let startDate = startDatepicker.value;
-        let endDate = endDatepicker.value;
-        console.log(startDate);
-        console.log(endDate);
-
         const dateFilter = {
             'startDate': startDate,
             'endDate': endDate
         }
 
-        const blob = await fetch('http://localhost:1234/xes', {
+        await fetch('http://localhost:1234/xes', {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(dateFilter)
         })
-            .then(response => response.blob())
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        saveFile(blob, "eventlog.xes");
+        .then(async response => {
+            const blob = await response.blob();
+            saveFile(blob, "eventlog.xes");
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     });
 
     const getImageGetButton = document.getElementById("download-image");
     getImageGetButton.addEventListener('click', async () => {
 
-        const startDatepicker = document.getElementById("start-date");
-        const endDatepicker = document.getElementById("end-date");
-        let startDate = startDatepicker.value;
-        let endDate = endDatepicker.value;
-        console.log(startDate);
-        console.log(endDate);
-
         const dateFilter = {
             'startDate': startDate,
-            'endDate': endDate
-        }
-
-        const blob = await fetch('http://localhost:1234/image', {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(dateFilter)
-        })
-        .then(response => response.blob())
-        .catch(error => {
-            console.error('Error:', error);
-        });
-
-        saveFile(blob, "image.png");
-    });
-
-    document.getElementById('nav-tab').addEventListener('shown.bs.tab', function (event) {
-        
-        console.log("ACTIVE TAB");
-
-        // Add your logic here based on the tab change
-    });
-
-    const visualisationTab = document.getElementById("nav-visualisation-tab");
-    visualisationTab.addEventListener('click', async () => {
-
-        const startDatepicker = document.getElementById("start-date");
-        const endDatepicker = document.getElementById("end-date");
-        let startDate = startDatepicker.value;
-        let endDate = endDatepicker.value;
-        console.log(startDate);
-        console.log(endDate);
-
-        const dateFilter = {
-            'startDate': startDate, // ewentualnie undefined
             'endDate': endDate
         }
 
@@ -265,129 +441,75 @@ document.addEventListener("DOMContentLoaded", function () {
             },
             body: JSON.stringify(dateFilter)
         })
-            .then(response => {
-                if (response.ok) {
-                    return response.blob();
-                }
-                throw new Error('Something went wrong');
-            })
-            .then(blob => {
-                displayVisualisationImage(blob);
-            })
-            .catch(error => {
-                const errorDiv = document.getElementById("error").style.display = "flex";
-                console.error('Error:', error);
-            });
+        .then(async response => {
+            const blob = await response.blob();
+            saveFile(blob, "image.png");
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
+
+    const visualisationTab = document.getElementById("nav-visualisation-tab");
+    visualisationTab.addEventListener('click', async () => {
+        getVisualisation();
+    });
+
+    const visualisationButton = document.getElementById("refresh-visualisation");
+    visualisationButton.addEventListener('click', async () => {
+        getVisualisation();
+    });
+
+    const filterButton = document.getElementById("filter-data");
+    filterButton.addEventListener('click', function() {
+        const activeTab = document.querySelector("button.active");
+
+        if (activeTab.textContent.trim() === "Cases") {
+            getEventLogData();
+        }
+        else if (activeTab.textContent.trim() === "Visualisation") {
+            getVisualisation();
+        }
+        else if (activeTab.textContent.trim() === "Events") {
+            getEventsData();
+        }
     });
 
     const startDatepicker = document.getElementById("start-date");
     startDatepicker.addEventListener('change', function() {
-        let startDate = startDatepicker.value;
-        console.log("kurde ", startDate);
+        startDate = document.getElementById("start-date").value;
+        if (startDate === "") {
+            startDate = undefined;
+        }
+        console.log("start date: ", startDate);
     });
 
-    const getEventlogButton = document.getElementById("nav-event-log-tab");
-    getEventlogButton.addEventListener('click', async () => {
-
-        // dane z datepickera
-        const startDatepicker = document.getElementById("start-date");
-        const endDatepicker = document.getElementById("end-date");
-        let startDate = startDatepicker.value;
-        let endDate = endDatepicker.value;
-        console.log(startDate);
-        console.log(endDate);
-
-        const dateFilter = {
-            'startDate': startDate,
-            'endDate': endDate
+    const endDatepicker = document.getElementById("end-date");
+    endDatepicker.addEventListener('change', function() {
+        endDate = document.getElementById("end-date").value;
+        if (endDate === "") {
+            endDate = undefined;
         }
+        console.log("end date: ", endDate);
+    });
 
-        await fetch('http://localhost:1234/eventlog', {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(dateFilter)
-        })
-            .then(response => response.json())
-            .then(data => {
-                removeElementById("eventlog-wrapper");
+    const getEventlogTab = document.getElementById("nav-event-log-tab");
+    getEventlogTab.addEventListener('click', async () => {
+        getEventLogData();
+    });
 
-                const visTab = document.getElementById("event-log");
-                visTab.style.height = "auto";
+    const getEventlogButton = document.getElementById("get-eventlog");
+    getEventlogButton.addEventListener('click', async () => {
+        getEventLogData();
+    })
 
-                console.log(data);
-                let idx = 0;
-                const wrapper = document.createElement("div");
-                wrapper.setAttribute("id", "eventlog-wrapper");
-               
+    const getEventlogListButton = document.getElementById("get-events");
+    getEventlogListButton.addEventListener('click', async function() {
+        getEventsData();
+    });
 
-                for (let caseId in data) {
-                    //console.log(data[eCase]);
-                    const div = document.createElement("div");
-                    div.setAttribute("class", "table-responsive");
-
-                    
-                    div.innerHTML = "<div>Case ID: " + caseId + "</div>";
-                    const table = createTable("table");
-                    const tbody = document.createElement("tbody");
-                    
-                    for (let event of data[caseId]) {
-                        //console.log(event);
-                        const row = createMainRow(idx);
-
-                        const eventIdCell = document.createElement("td");
-                        const fromVisitCell = document.createElement("td");
-                        const titleCell = document.createElement("td");
-                        //const expandCell = document.createElement("td");
-                        //expandCell.setAttribute("class", "expand-button");
-                        eventIdCell.textContent = event.eventId;
-                        fromVisitCell.textContent = event.fromVisit;
-                        titleCell.textContent = event.title;
-
-                        row.appendChild(eventIdCell);
-                        row.appendChild(fromVisitCell);
-                        row.appendChild(titleCell);
-                        //row.appendChild(expandCell);
-
-                        const hideRow = document.createElement("tr");
-                        hideRow.setAttribute("class", "hide-table-padding");
-                        const tdEmpty = document.createElement("td");
-                        hideRow.appendChild(tdEmpty);
-                        const td = document.createElement("td");
-                        td.setAttribute("colspan", "3");
-
-                        const div1 = createDetailsDiv("Url:", event.url);
-                        const div2 = createDetailsDiv("Duration:", getDuration(event.duration));
-                        const div3 = createDetailsDiv("Timestamp:", getDateFromTimestamp(event.timestamp));
-                        const div4 = createDetailsDiv("Transition:", event.transition);
-
-                        const divCollapse = document.createElement("div");
-                        divCollapse.setAttribute("id", "collapse" + idx);
-                        divCollapse.setAttribute("class", "collapse in p-3");
-
-                        divCollapse.appendChild(div1);
-                        divCollapse.appendChild(div2);
-                        divCollapse.appendChild(div3);
-                        divCollapse.appendChild(div4);
-
-                        td.appendChild(divCollapse);
-
-                        hideRow.appendChild(td);
-
-                        tbody.appendChild(row);
-                        tbody.appendChild(hideRow);
-                        idx += 1;
-                    }
-                    table.appendChild(tbody);
-                    div.appendChild(table);
-                    div.appendChild(createDivider());
-                    wrapper.appendChild(div);
-                }
-                document.getElementById("eventlog-data").appendChild(wrapper);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+    const getEventlogListTab = document.getElementById("nav-events-tab");
+    getEventlogListTab.addEventListener('click', async function() {
+        getEventsData();
     });
 });

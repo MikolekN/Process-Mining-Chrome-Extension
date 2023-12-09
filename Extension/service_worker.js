@@ -320,8 +320,6 @@ chrome.tabs.onRemoved.addListener(async function(tabId) {
 
 chrome.tabs.onActivated.addListener(async function(activeInfo) {
 
-	console.log(currUrl);
-
 	let prevEvent = getEventByUrlAndTabId(currUrl, currTabId, events);
 	if (prevEvent !== undefined) {
 		prevEvent.endTime = new Date().getTime();
