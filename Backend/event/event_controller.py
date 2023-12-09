@@ -35,7 +35,7 @@ class EventController:
             return make_response(jsonify(result.message), 404)
 
         # Route for retrieving events
-        @event_blueprint.route('', methods=['GET'])
+        @event_blueprint.route('', methods=['POST'])
         def get_events():
             data = parse_date_data(request)
             result = self.service.get_events(data)
