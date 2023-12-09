@@ -124,11 +124,11 @@ class TestEventService(unittest.TestCase):
         self.assertTrue(result.ok)
         self.assertEqual(self.event_service.filter_value, 0)
 
-    def test_set_filter_full_60k(self):
+    def test_set_filter_full(self):
         data = [self.event2, self.event3]
         result = self.event_service.set_filter(data)
         self.assertTrue(result.ok)
-        self.assertEqual(self.event_service.filter_value, 60_000)
+        self.assertEqual(self.event_service.filter_value, 80)
 
     def test_set_date_empty(self):
         data = {'endDate': None, 'startDate': None}

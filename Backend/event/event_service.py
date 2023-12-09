@@ -330,6 +330,7 @@ class EventService:
             ]
 
         self.cases = [chain for chain in self.cases if len(chain) != 0]
+        
         return Success(self.cases)
 
     def chain_events(self, events):

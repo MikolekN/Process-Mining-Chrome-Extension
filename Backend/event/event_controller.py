@@ -69,7 +69,7 @@ class EventController:
             return make_response(jsonify(result.message), 404)
 
         # Route for retrieving an event log
-        @event_blueprint.route('/eventlog', methods=['POST'])
+        @event_blueprint.route('/eventlog', methods=['GET', 'POST'])
         def get_eventlog():
             data = parse_date_data(request)
             result = self.service.get_eventlog(data)
@@ -78,7 +78,7 @@ class EventController:
             return make_response(jsonify(result.message), 404)
 
         # Route for retrieving an XES file
-        @event_blueprint.route('/xes', methods=['POST'])
+        @event_blueprint.route('/xes', methods=['GET', 'POST'])
         def get_xes():
             data = parse_date_data(request)
             result = self.service.get_xes(data)
@@ -95,7 +95,7 @@ class EventController:
             return make_response(jsonify(result.message), 500)
 
         # Route for retrieving an image
-        @event_blueprint.route('/image', methods=['POST'])
+        @event_blueprint.route('/image', methods=['GET', 'POST'])
         def get_image():
             data = parse_date_data(request)
             result = self.service.get_image(data)
