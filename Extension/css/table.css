@@ -37,3 +37,11 @@ tr.hide-table-padding td {
 .eventlog-tab {
     height: 400px;
 }
+
+.eventlog-table {
+    margin-bottom: 15px;
+}
+
+.collapse {
+    margin: 10px;   
+}
