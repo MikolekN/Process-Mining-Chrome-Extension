@@ -86,7 +86,7 @@ class TestCases(unittest.TestCase):
         self.assertEqual(cases.cases[0].events[1], self.event2)
 
     def test_update_complex_cases(self):
-        cases = Cases(Case([self.event1, self.event2]))
+        cases = Cases(self.case1)
         cases.update_cases(self.event4)
         self.assertEqual(len(cases.cases), 2)
         self.assertEqual(cases.cases[0].events[0], self.event1)
