@@ -335,6 +335,8 @@ const createVisualisationImage = function(blob) {
     let img = document.createElement('img');
     img.setAttribute("id", "visualisation-graph");
     img.src = imgUrl;
+    img.style.maxWidth = "100%";
+    img.style.height = "auto";
     document.getElementById("zoom").appendChild(img);
 }
 

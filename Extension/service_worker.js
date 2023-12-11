@@ -131,7 +131,7 @@ const cleanEventData = function(event) {
 const postEventData = async function(event) {
 	let eventToPost = cleanEventData(event);
 
-	await fetch('http://localhost:1234/', {
+	await fetch('http://localhost:1234/send', {
 		method: "POST",
 		body: JSON.stringify(eventToPost),
 		headers: new Headers({

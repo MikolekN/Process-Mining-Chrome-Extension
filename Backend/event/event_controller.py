@@ -44,7 +44,7 @@ class EventController:
             return make_response(jsonify(result.message), 500)
 
         # Route for posting event
-        @event_blueprint.route('', methods=['POST'])
+        @event_blueprint.route('/send', methods=['POST'])
         def post_events():
             data = parse_date_data(request)
             result = self.service.post_events(data)
