@@ -9,3 +9,4 @@ __pycache__
 *.bmp
 *.tif
 *.tiff
+!Extension/images/*.png
