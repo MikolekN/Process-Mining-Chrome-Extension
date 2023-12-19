@@ -66,7 +66,7 @@ class TestEventController(unittest.TestCase):
 
     def test_post_events(self):
         self.mock_service.post_events.return_value = Success(self.event)
-        response = self.client.post('/', data=json.dumps(self.event), content_type='application/json')
+        response = self.client.post('/send', data=json.dumps(self.event), content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, self.event)
 

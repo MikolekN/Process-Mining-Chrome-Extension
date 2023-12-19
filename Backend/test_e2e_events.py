@@ -67,7 +67,7 @@ class EventControllerTestCase(TestCase):
         self.assertEqual(response.json, [self.event])
 
     def test_post_events(self):
-        response = self.client.post('/', data=json.dumps(self.event), content_type='application/json')
+        response = self.client.post('/send', data=json.dumps(self.event), content_type='application/json')
         self.assertEqual(response.status_code, 200)
         received_event = response.json
         expected_event = deepcopy(self.event)
@@ -75,8 +75,8 @@ class EventControllerTestCase(TestCase):
         self.assertEqual(received_event, expected_event)
 
     def test_post_events_event_already_exists(self):
-        self.client.post('/', data=json.dumps(self.event), content_type='application/json')
-        response = self.client.post('/', data=json.dumps(self.event), content_type='application/json')
+        self.client.post('/send', data=json.dumps(self.event), content_type='application/json')
+        response = self.client.post('/send', data=json.dumps(self.event), content_type='application/json')
         self.assertEqual(response.status_code, 500)
 
     def test_get_event_by_id_empty(self):
